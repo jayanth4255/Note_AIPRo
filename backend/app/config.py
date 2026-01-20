@@ -61,10 +61,17 @@ class Settings(BaseSettings):
         """Convert MB to bytes"""
         return self.MAX_FILE_SIZE_MB * 1024 * 1024
     
+    @property
+    def database_url_validated(self) -> str:
+        """Fix postgres:// to postgresql:// for Render/Heroku compatibility"""
+        if self.DATABASE_URL.startswith("postgres://"):
+            return self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        return self.DATABASE_URL
+
     class Config:
         env_file = ".env"
         case_sensitive = False
-        extra = "ignore"  # Ignore extra fields in .env to prevent validation errors
+        extra = "ignore"
 
 
 @lru_cache()

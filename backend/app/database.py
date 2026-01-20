@@ -11,7 +11,7 @@ settings = get_settings()
 
 # Create PostgreSQL engine with connection pooling
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.database_url_validated,
     echo=settings.DEBUG,
     pool_pre_ping=True,  # Enable connection health checks
     pool_size=10,  # Connection pool size
