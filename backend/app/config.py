@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
     
     # Database
-    DATABASE_URL: str = "sqlite:///./notes.db"
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/notes_ai_pro"
     
     # Security
     SECRET_KEY: str
