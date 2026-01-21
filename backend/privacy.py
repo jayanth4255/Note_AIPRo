@@ -5,7 +5,7 @@ Privacy features for notes - locking and hiding functionality
 from passlib.context import CryptContext
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from . import models, schemas
+import models, schemas
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
