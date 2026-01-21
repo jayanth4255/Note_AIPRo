@@ -23,13 +23,8 @@ Base.metadata.create_all(bind=engine)
 settings = get_settings()
 
 # Initialize FastAPI app
-app = FastAPI(
-    title=settings.APP_NAME,
-    description="Production-ready note-taking application with AI features",
-    version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc"
-)
+app = FastAPI()
+
 
 
 # CORS Configuration - Allow ALL origins for debugging
