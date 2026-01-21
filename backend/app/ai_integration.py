@@ -8,13 +8,37 @@ from .config import get_settings
 
 settings = get_settings()
 
-# Initialize OpenRouter client
+# Initialize AI client
 client = None
-if settings.OPENROUTER_API_KEY:
+if settings.OPENAI_API_KEY:
+    print(f"DEBUG: Initializing OpenAI client (Key starts with: {settings.OPENAI_API_KEY[:10]}...)")
+    client = AsyncOpenAI(
+        api_key=settings.OPENAI_API_KEY,
+        base_url=settings.OPENAI_BASE_URL or "https://api.openai.com/v1",
+    )
+elif settings.OPENROUTER_API_KEY:
+    print(f"DEBUG: Initializing OpenRouter client (Key starts with: {settings.OPENROUTER_API_KEY[:10]}...)")
     client = AsyncOpenAI(
         api_key=settings.OPENROUTER_API_KEY,
         base_url=settings.OPENROUTER_BASE_URL,
+        default_headers={
+            "HTTP-Referer": "http://localhost:5173", # Required by some OpenRouter models
+            "X-Title": "NoteAI Pro",
+        }
     )
+else:
+    print("DEBUG: NO AI API KEY CONFIGURED!")
+
+def _get_model():
+    """Get the appropriate model name based on provider"""
+    model = "gpt-4o-mini"
+    if settings.OPENAI_API_KEY:
+        model = settings.OPENAI_MODEL or "gpt-4o-mini"
+    elif settings.OPENROUTER_MODEL:
+        model = settings.OPENROUTER_MODEL
+    
+    print(f"DEBUG: Using model: {model}")
+    return model
 
 def _truncate_text(text: str, max_chars: int = 100000) -> str:
     """Truncate text to safe limit to avoid context length errors"""
@@ -36,7 +60,7 @@ async def _generate_text(prompt: str, system_prompt: str = "You are a helpful as
         
     try:
         response = await client.chat.completions.create(
-            model=settings.OPENROUTER_MODEL,
+            model=_get_model(),
             messages=messages,
             temperature=0.7,
             max_tokens=1000
