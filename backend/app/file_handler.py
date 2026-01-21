@@ -9,7 +9,7 @@ import io
 import hashlib
 from datetime import datetime
 import fitz  # PyMuPDF
-from config import get_settings
+from .config import get_settings
 
 settings = get_settings()
 

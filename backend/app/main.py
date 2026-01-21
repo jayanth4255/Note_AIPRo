@@ -11,10 +11,9 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
 from io import BytesIO
-
-from database import get_db, engine, Base
-from config import get_settings
-import models, schemas, crud, auth, ai_integration, file_handler, pdf_export
+from .database import get_db, engine, Base
+from .config import get_settings
+from . import models, schemas, crud, auth, ai_integration, file_handler, pdf_export
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -23,8 +22,13 @@ Base.metadata.create_all(bind=engine)
 settings = get_settings()
 
 # Initialize FastAPI app
-app = FastAPI()
-
+app = FastAPI(
+    title=settings.APP_NAME,
+    description="Production-ready note-taking application with AI features",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc"
+)
 
 
 # CORS Configuration - Allow ALL origins for debugging
@@ -317,7 +321,7 @@ async def lock_note(
     db: Session = Depends(get_db)
 ):
     """Lock a note with a PIN"""
-    from privacy import lock_note as lock_note_fn
+    from .privacy import lock_note as lock_note_fn
     result = await lock_note_fn(note_id, lock_request.pin, db, current_user.id)
     return result
 
@@ -330,7 +334,7 @@ async def unlock_note(
     db: Session = Depends(get_db)
 ):
     """Unlock a note with the correct PIN"""
-    from privacy import unlock_note as unlock_note_fn
+    from .privacy import unlock_note as unlock_note_fn
     result = await unlock_note_fn(note_id, unlock_request.pin, db, current_user.id)
     return result
 
@@ -342,7 +346,7 @@ async def toggle_hide_note(
     db: Session = Depends(get_db)
 ):
     """Toggle the hidden status of a note"""
-    from privacy import toggle_hide_note as toggle_hide_fn
+    from .privacy import toggle_hide_note as toggle_hide_fn
     result = await toggle_hide_fn(note_id, db, current_user.id)
     return result
 
