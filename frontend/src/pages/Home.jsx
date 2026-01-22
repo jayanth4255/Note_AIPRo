@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api"; // adjust path if needed
 
 export default function Home() {
     const [status, setStatus] = useState("Checking backend...");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get("http://localhost:8000/health")
+        api.get("/health")
             .then((res) => {
                 setStatus("Backend Connected: " + res.data.app_name);
             })
@@ -16,6 +16,7 @@ export default function Home() {
             })
             .finally(() => setLoading(false));
     }, []);
+
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
