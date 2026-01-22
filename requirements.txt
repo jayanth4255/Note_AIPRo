@@ -11,6 +11,7 @@ slowapi==0.1.9  # Rate limiting
 pydantic-settings
 psycopg2-binary
 openai
+email-validator
 Pillow
 pymupdf
 reportlab
