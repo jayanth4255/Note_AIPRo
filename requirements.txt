@@ -8,3 +8,4 @@ python-dotenv==1.0.1
 alembic==1.16.2
 groq==0.4.1  # For free LLM
 slowapi==0.1.9  # Rate limiting
+pydantic-settings
