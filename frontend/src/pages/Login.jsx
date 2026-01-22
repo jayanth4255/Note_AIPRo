@@ -125,7 +125,7 @@ export default function Login() {
                 {/* Demo Credentials (Remove in production) */}
                 <div className="mt-4 text-center text-sm text-gray-600 bg-white/50 rounded-lg p-3">
                     <p className="font-medium">Demo Credentials:</p>
-                    <p>Email: demo@noteaipro.com | Password: demo123</p>
+                    <p>Email: demo@gmail.com | Password: demo123</p>
                 </div>
             </div>
         </div>
