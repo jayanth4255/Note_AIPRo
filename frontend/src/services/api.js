@@ -12,6 +12,8 @@ export const notesApi = {
     uploadFile: (noteId, formData) => api.post(`/api/notes/${noteId}/files`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
+    archive: (id) => api.post(`/api/notes/${id}/archive`),
+    unarchive: (id) => api.post(`/api/notes/${id}/unarchive`),
 };
 
 // File API

@@ -105,42 +105,38 @@ export default function LockModal({ isLocking, onLock, onUnlock, onClose }) {
     const currentPin = step === 'confirm' ? confirmPin : pin;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
-            <div className="lock-modal-content relative bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 rounded-3xl p-8 max-w-md w-full border-2 border-purple-500/30 shadow-2xl animate-scaleIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn">
+            <div className="lock-modal-content relative bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-800 shadow-2xl animate-scaleIn">
                 {/* Close button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition"
                 >
-                    <X className="w-5 h-5 text-white" />
+                    <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 </button>
 
                 {/* Lock Icon with Animation */}
                 <div className="flex justify-center mb-6">
-                    <div className={`relative w-24 h-24 rounded-full bg-gradient-to-br ${success ? 'from-green-500 to-emerald-500' :
-                            isLocking ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-cyan-500'
-                        } flex items-center justify-center shadow-lg ${!success && 'animate-pulse-glow'}`}>
+                    <div className={`relative w-24 h-24 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center shadow-lg ${!success && 'animate-pulse-glow'}`}>
                         {success ? (
-                            <Check className="w-12 h-12 text-white animate-scaleIn" />
+                            <Check className="w-12 h-12 text-primary-600 dark:text-primary-400 animate-scaleIn" />
                         ) : isLocking ? (
-                            <Lock className="w-12 h-12 text-white" />
+                            <Lock className="w-12 h-12 text-primary-600 dark:text-primary-400" />
                         ) : (
-                            <Unlock className="w-12 h-12 text-white" />
+                            <Unlock className="w-12 h-12 text-primary-600 dark:text-primary-400" />
                         )}
-                        {/* Fingerprint scan effect */}
-                        <div className="absolute inset-0 rounded-full border-4 border-white/20 animate-ping"></div>
                     </div>
                 </div>
 
                 {/* Title */}
                 <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-white mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                         {success ? 'Success!' :
                             step === 'enter' ? 'Set PIN' :
                                 step === 'confirm' ? 'Confirm PIN' :
                                     'Enter PIN'}
                     </h3>
-                    <p className="text-white/60">
+                    <p className="text-gray-600 dark:text-gray-400">
                         {success ? (isLocking ? 'Note locked successfully' : 'Note unlocked successfully') :
                             step === 'enter' ? 'Choose a 4-6 digit PIN' :
                                 step === 'confirm' ? 'Enter your PIN again' :
@@ -154,12 +150,12 @@ export default function LockModal({ isLocking, onLock, onUnlock, onClose }) {
                         <div
                             key={i}
                             className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all duration-300 ${i < currentPin.length
-                                    ? 'border-purple-500 bg-purple-500/20 scale-110'
-                                    : 'border-white/20 bg-white/5'
+                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 scale-110'
+                                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
                                 }`}
                         >
                             {i < currentPin.length && (
-                                <div className="w-3 h-3 rounded-full bg-purple-400 animate-scaleIn"></div>
+                                <div className="w-3 h-3 rounded-full bg-primary-600 dark:bg-primary-400 animate-scaleIn"></div>
                             )}
                         </div>
                     ))}
@@ -167,7 +163,7 @@ export default function LockModal({ isLocking, onLock, onUnlock, onClose }) {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm text-center animate-shake">
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 text-sm text-center animate-shake">
                         {error}
                     </div>
                 )}
@@ -180,7 +176,7 @@ export default function LockModal({ isLocking, onLock, onUnlock, onClose }) {
                                 key={num}
                                 onClick={() => handleNumberClick(num.toString())}
                                 disabled={loading}
-                                className="h-16 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 border border-white/20 text-white text-2xl font-bold transition transform hover:scale-105 active:scale-95 disabled:opacity-50 backdrop-blur-sm"
+                                className="h-16 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 text-2xl font-bold transition transform hover:scale-105 active:scale-95 disabled:opacity-50"
                             >
                                 {num}
                             </button>
@@ -194,17 +190,14 @@ export default function LockModal({ isLocking, onLock, onUnlock, onClose }) {
                         <button
                             onClick={handleBackspace}
                             disabled={loading}
-                            className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition disabled:opacity-50"
+                            className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium transition disabled:opacity-50"
                         >
                             Backspace
                         </button>
                         <button
                             onClick={handleSubmit}
                             disabled={loading || currentPin.length < 4}
-                            className={`flex-1 py-3 rounded-xl font-medium transition disabled:opacity-50 ${loading
-                                    ? 'bg-gradient-to-r from-gray-500 to-gray-600'
-                                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-2xl'
-                                } text-white`}
+                            className="flex-1 py-3 rounded-xl font-medium transition disabled:opacity-50 bg-primary-600 hover:bg-primary-700 text-white"
                         >
                             {loading ? (
                                 <div className="flex items-center justify-center gap-2">
@@ -221,9 +214,6 @@ export default function LockModal({ isLocking, onLock, onUnlock, onClose }) {
                         </button>
                     </div>
                 )}
-
-                {/* Neon glow effects */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl opacity-20 blur-xl -z-10"></div>
             </div>
         </div>
     );

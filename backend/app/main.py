@@ -11,9 +11,9 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
 from io import BytesIO
-from backend.app.database import get_db, engine, Base
-from backend.app.config import get_settings
-from backend.app import models, schemas, crud, auth, ai_integration, file_handler, pdf_export
+from .database import get_db, engine, Base
+from .config import get_settings
+from . import models, schemas, crud, auth, ai_integration, file_handler, pdf_export
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -195,11 +195,12 @@ async def change_password(
 async def get_notes(
     skip: int = 0,
     limit: int = 100,
+    archived: bool = False,
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get all notes for current user"""
-    notes = crud.get_notes(db, current_user.id, skip, limit)
+    notes = crud.get_notes(db, current_user.id, skip, limit, archived)
     return notes
 
 
@@ -300,6 +301,32 @@ async def delete_note(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@app.post("/api/notes/{note_id}/archive", response_model=schemas.NoteOut)
+async def archive_note(
+    note_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Archive a note"""
+    note = crud.archive_note(db, note_id, current_user.id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return note
+
+
+@app.post("/api/notes/{note_id}/unarchive", response_model=schemas.NoteOut)
+async def unarchive_note(
+    note_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Unarchive a note"""
+    note = crud.unarchive_note(db, note_id, current_user.id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return note
+
+
 @app.post("/api/notes/search", response_model=List[schemas.NoteOut])
 async def search_notes(
     search_params: schemas.NoteSearch,
@@ -321,7 +348,7 @@ async def lock_note(
     db: Session = Depends(get_db)
 ):
     """Lock a note with a PIN"""
-    from backend.app.privacy import lock_note as lock_note_fn
+    from .privacy import lock_note as lock_note_fn
     result = await lock_note_fn(note_id, lock_request.pin, db, current_user.id)
     return result
 
@@ -334,7 +361,7 @@ async def unlock_note(
     db: Session = Depends(get_db)
 ):
     """Unlock a note with the correct PIN"""
-    from backend.app.privacy import unlock_note as unlock_note_fn
+    from .privacy import unlock_note as unlock_note_fn
     result = await unlock_note_fn(note_id, unlock_request.pin, db, current_user.id)
     return result
 
@@ -346,7 +373,7 @@ async def toggle_hide_note(
     db: Session = Depends(get_db)
 ):
     """Toggle the hidden status of a note"""
-    from backend.app.privacy import toggle_hide_note as toggle_hide_fn
+    from .privacy import toggle_hide_note as toggle_hide_fn
     result = await toggle_hide_fn(note_id, db, current_user.id)
     return result
 

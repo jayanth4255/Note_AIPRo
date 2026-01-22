@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Sparkles, Image as ImageIcon, Loader2, Plus, XCircle, Send, MessageSquare, History } from 'lucide-react';
+import { X, Sparkles, Image as ImageIcon, Loader2, Plus, Send, MessageSquare, History } from 'lucide-react';
 import { aiApi } from '../services/api';
 import ReactMarkdown from 'react-markdown';
 import mermaid from 'mermaid';
@@ -114,26 +114,28 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 animate-fadeIn">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-white/20">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700">
                 {/* Header */}
-                <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600">
+                <div className="px-8 py-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-inner">
-                            <Sparkles className="w-6 h-6 text-white" />
+                        <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/50 rounded-2xl flex items-center justify-center text-primary-600 dark:text-primary-400">
+                            <Sparkles className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-white tracking-tight">AI Studio</h2>
-                            <p className="text-purple-100/80 text-sm font-medium">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">AI Studio</h2>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
                                 {context ? 'Context-aware mode active 🎯' : 'Ready for your creativity ✨'}
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <div className="bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/10 flex">
+                        <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl flex">
                             <button
                                 onClick={() => setMode('chat')}
-                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${mode === 'chat' ? 'bg-white text-purple-600 shadow-lg' : 'text-white hover:bg-white/5'}`}
+                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${mode === 'chat'
+                                    ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50'}`}
                             >
                                 <div className="flex items-center gap-2">
                                     <MessageSquare className="w-4 h-4" />
@@ -142,7 +144,9 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                             </button>
                             <button
                                 onClick={() => setMode('generate')}
-                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${mode === 'generate' ? 'bg-white text-purple-600 shadow-lg' : 'text-white hover:bg-white/5'}`}
+                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${mode === 'generate'
+                                    ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/50'}`}
                             >
                                 <div className="flex items-center gap-2">
                                     <ImageIcon className="w-4 h-4" />
@@ -152,7 +156,7 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                         </div>
                         <button
                             onClick={handleDiscard}
-                            className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white"
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors text-gray-500 dark:text-gray-400"
                         >
                             <X className="w-6 h-6" />
                         </button>
@@ -160,7 +164,7 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                 </div>
 
                 {/* Main Body */}
-                <div className="flex-1 flex overflow-hidden bg-gray-50/50">
+                <div className="flex-1 flex overflow-hidden bg-gray-50 dark:bg-gray-800/50">
                     {/* Left Side: Interaction Arena */}
                     <div className="flex-1 flex flex-col overflow-hidden">
                         {mode === 'chat' ? (
@@ -168,27 +172,27 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 {messages.length === 0 && (
                                     <div className="h-full flex flex-col items-center justify-center opacity-40">
-                                        <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                                            <MessageSquare className="w-10 h-10 text-purple-600" />
+                                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                                            <MessageSquare className="w-10 h-10 text-gray-400 dark:text-gray-500" />
                                         </div>
-                                        <p className="text-gray-500 font-medium italic">Start a conversation about this note...</p>
+                                        <p className="text-gray-500 dark:text-gray-400 font-medium italic">Start a conversation about this note...</p>
                                     </div>
                                 )}
                                 {messages.map((msg, idx) => (
                                     <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slideUp`}>
                                         <div className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${msg.role === 'user'
-                                                ? 'bg-purple-600 text-white rounded-tr-none'
-                                                : msg.role === 'system'
-                                                    ? 'bg-gray-200 text-gray-600 text-xs uppercase tracking-widest font-bold mx-auto text-center border-none'
-                                                    : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
+                                            ? 'bg-primary-600 text-white rounded-tr-none'
+                                            : msg.role === 'system'
+                                                ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-widest font-bold mx-auto text-center border-none'
+                                                : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
                                             }`}>
-                                            <div className="prose prose-sm max-w-none prose-invert">
+                                            <div className="prose prose-sm max-w-none dark:prose-invert">
                                                 <ReactMarkdown>{msg.content}</ReactMarkdown>
                                             </div>
                                             {msg.role === 'assistant' && (
                                                 <button
                                                     onClick={() => handleAddToNotepad(msg.content)}
-                                                    className="mt-3 flex items-center gap-1.5 text-xs font-bold text-purple-600 hover:text-purple-700 transition"
+                                                    className="mt-3 flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition"
                                                 >
                                                     <Plus className="w-3 h-3" />
                                                     Add to note
@@ -203,43 +207,43 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                             /* Classic Generation Interface */
                             <div className="flex-1 overflow-y-auto p-8">
                                 <div className="space-y-6">
-                                    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                                        <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">What should I create for you?</label>
+                                    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                                        <label className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">What should I create for you?</label>
                                         <textarea
                                             value={input}
                                             onChange={(e) => setInput(e.target.value)}
                                             placeholder="Write a poem about space...&#10;Generate a futuristic city image...&#10;Create a flowchart for a login system..."
-                                            className="w-full px-4 py-3 border-none focus:ring-0 text-lg placeholder-gray-300 resize-none h-32 bg-gray-50/50 rounded-xl"
+                                            className="w-full px-4 py-3 border-none focus:ring-0 text-lg placeholder-gray-300 dark:placeholder-gray-600 resize-none h-32 bg-gray-50 dark:bg-gray-800 rounded-xl text-gray-900 dark:text-gray-100"
                                         />
                                         <div className="flex flex-wrap gap-2">
                                             {['💬 Text', '🖼️ Image', '📊 Flowchart'].map((tag, i) => (
-                                                <span key={i} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">{tag}</span>
+                                                <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs font-bold">{tag}</span>
                                             ))}
                                         </div>
                                     </div>
 
                                     {result && (
-                                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-lg animate-fadeIn">
-                                            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-50">
+                                        <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-lg animate-fadeIn">
+                                            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-50 dark:border-gray-800">
                                                 <span className="text-sm font-bold text-gray-400">RESULT PREVIEW</span>
                                                 <button
                                                     onClick={() => handleAddToNotepad()}
-                                                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-lg shadow-purple-200"
+                                                    className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-lg"
                                                 >
                                                     <Plus className="w-4 h-4" />
                                                     Add to Notepad
                                                 </button>
                                             </div>
 
-                                            <div className="overflow-hidden rounded-xl bg-gray-50">
+                                            <div className="overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800">
                                                 {resultType === 'image' ? (
                                                     <img src={result} alt="Generated" className="w-full block" />
                                                 ) : resultType === 'flowchart' ? (
-                                                    <div className="mermaid bg-white p-8">
+                                                    <div className="mermaid bg-white p-8 overflow-x-auto">
                                                         {result}
                                                     </div>
                                                 ) : (
-                                                    <div className="p-4 prose prose-indigo max-w-none">
+                                                    <div className="p-4 prose prose-indigo dark:prose-invert max-w-none">
                                                         <ReactMarkdown>{result}</ReactMarkdown>
                                                     </div>
                                                 )}
@@ -251,8 +255,8 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                         )}
 
                         {/* Input Area (Pinned to bottom) */}
-                        <div className="p-6 bg-white border-t border-gray-100">
-                            <div className="relative flex items-end gap-2 bg-gray-100 rounded-2xl p-2 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-purple-500/20 active:scale-[0.99]">
+                        <div className="p-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+                            <div className="relative flex items-end gap-2 bg-gray-100 dark:bg-gray-800 rounded-2xl p-2 transition-all focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:ring-2 focus-within:ring-primary-500/20 active:scale-[0.99] border border-transparent focus-within:border-gray-200 dark:focus-within:border-gray-700">
                                 <textarea
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
@@ -263,7 +267,7 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                                         }
                                     }}
                                     placeholder={mode === 'chat' ? 'Ask anything about this note...' : 'Describe what you want to generate...'}
-                                    className="flex-1 max-h-32 px-4 py-3 bg-transparent border-none focus:ring-0 resize-none text-gray-700 font-medium"
+                                    className="flex-1 max-h-32 px-4 py-3 bg-transparent border-none focus:ring-0 resize-none text-gray-700 dark:text-gray-200 font-medium placeholder-gray-400 dark:placeholder-gray-500"
                                     rows={1}
                                     style={{ height: 'auto', minHeight: '48px' }}
                                     disabled={loading}
@@ -272,8 +276,8 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                                     onClick={handleGenerate}
                                     disabled={loading || !input.trim()}
                                     className={`p-3 rounded-xl transition-all ${loading || !input.trim()
-                                            ? 'bg-gray-200 text-gray-400'
-                                            : 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 hover:scale-105 active:scale-95'
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+                                        : 'bg-primary-600 text-white shadow-lg shadow-primary-100 dark:shadow-none hover:scale-105 active:scale-95'
                                         }`}
                                 >
                                     {loading ? (
@@ -287,14 +291,14 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                     </div>
 
                     {/* Right Side: Quick Suggestions/Info (Desktop only) */}
-                    <div className="hidden lg:flex w-64 bg-white border-l border-gray-100 flex-col p-6 overflow-y-auto">
+                    <div className="hidden lg:flex w-64 bg-white dark:bg-gray-900 border-l border-gray-100 dark:border-gray-800 flex-col p-6 overflow-y-auto">
                         <div className="space-y-8">
                             <div>
                                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <Sparkles className="w-3 h-3" />
                                     Mode Info
                                 </h3>
-                                <p className="text-sm text-gray-600 leading-relaxed">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                                     {mode === 'chat'
                                         ? "I have analyzed your note's content. Ask me to summarize, find key points, or rewrite sections."
                                         : "Use this to create entirely new content, dynamic flowcharts, or high-fidelity images."
@@ -303,9 +307,9 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                             </div>
 
                             {context && (
-                                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                    <h4 className="text-xs font-bold text-blue-700 mb-2">Note Context</h4>
-                                    <div className="text-[10px] text-blue-600 line-clamp-4">
+                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-900/50">
+                                    <h4 className="text-xs font-bold text-blue-700 dark:text-blue-400 mb-2">Note Context</h4>
+                                    <div className="text-[10px] text-blue-600 dark:text-blue-300 line-clamp-4">
                                         {context.replace(/<[^>]*>/g, '')}
                                     </div>
                                 </div>
@@ -326,7 +330,7 @@ export default function AIModal({ isOpen, onClose, onAddToNote, context = null }
                                         <button
                                             key={i}
                                             onClick={() => setInput(tip)}
-                                            className="w-full text-left px-3 py-2 text-xs font-bold text-gray-500 hover:bg-gray-50 hover:text-purple-600 rounded-lg transition"
+                                            className="w-full text-left px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition"
                                         >
                                             • {tip}
                                         </button>

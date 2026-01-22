@@ -1,372 +1,251 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { notesApi, versionsApi, aiApi } from '../services/api';
-import { ArrowLeft, Edit, Trash2, Download, Star, Clock, Sparkles, CheckSquare, Brain, List, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Edit2, Trash2, ArrowLeft, Calendar, Share2, Lock, Eye, EyeOff, Archive as ArchiveIcon, RefreshCw, Download } from 'lucide-react';
+import { notesApi } from '../services/api';
+import toast from 'react-hot-toast';
+import mermaid from 'mermaid';
 import AppLayout from '../components/AppLayout';
-import AIModal from '../components/AIModal';
 import FileViewerModal from '../components/FileViewerModal';
+import LockModal from '../components/LockModal';
 
 export default function NoteDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [note, setNote] = useState(null);
-    const [versions, setVersions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showAIModal, setShowAIModal] = useState(false);
-    const [aiContext, setAiContext] = useState(null);
-    const [viewerFileId, setViewerFileId] = useState(null);
-    const [showViewer, setShowViewer] = useState(false);
+    const [showFileModal, setShowFileModal] = useState(false);
+    const [selectedFileId, setSelectedFileId] = useState(null);
 
-    // New AI features state
-    const [aiLoading, setAiLoading] = useState(false);
-    const [tasks, setTasks] = useState(null);
-    const [relatedNotes, setRelatedNotes] = useState(null);
-    const [flashcards, setFlashcards] = useState(null);
+    // Privacy
+    const [isLocked, setIsLocked] = useState(false);
+    const [showLockModal, setShowLockModal] = useState(false);
+    const [lockType, setLockType] = useState('unlock'); // 'lock' or 'unlock'
 
     useEffect(() => {
-        fetchNoteAndVersions();
+        if (id) fetchNote();
     }, [id]);
 
-    const fetchNoteAndVersions = async () => {
+    useEffect(() => {
+        // Initialize mermaid for flowcharts
+        if (note && note.content) {
+            mermaid.initialize({ startOnLoad: true, theme: 'default' });
+            setTimeout(() => {
+                mermaid.contentLoaded();
+            }, 500);
+        }
+    }, [note]);
+
+    const fetchNote = async () => {
+        setLoading(true);
         try {
-            const [noteRes, versionsRes] = await Promise.all([
-                notesApi.getById(id),
-                versionsApi.getHistory(id)
-            ]);
-            setNote(noteRes.data);
-            setVersions(versionsRes.data);
+            const response = await notesApi.getById(id);
+            setNote(response.data);
+            setIsLocked(response.data.is_locked && !response.data.content); // If locked and no content returned
         } catch (error) {
             console.error('Failed to fetch note:', error);
-            alert('Failed to load note');
-            navigate('/notes');
+            toast.error('Failed to load note');
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this note?')) return;
-
-        try {
-            await notesApi.delete(id);
-            navigate('/notes');
-        } catch (error) {
-            console.error('Failed to delete note:', error);
-            alert('Failed to delete note');
+        if (window.confirm('Are you sure you want to delete this note?')) {
+            try {
+                await notesApi.delete(id);
+                toast.success('Note deleted');
+                navigate('/notes');
+            } catch (error) {
+                toast.error('Failed to delete note');
+            }
         }
     };
 
-    const handleExportPdf = async () => {
+    const handleArchive = async () => {
         try {
-            const response = await notesApi.exportPdf(id);
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `${note.title}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            if (note.is_archived) {
+                await notesApi.unarchive(id);
+                toast.success('Note restored');
+            } else {
+                await notesApi.archive(id);
+                toast.success('Note archived');
+            }
+            fetchNote();
         } catch (error) {
-            console.error('Failed to export PDF:', error);
-            alert('Failed to export PDF');
+            toast.error('Failed to update archive status');
         }
     };
 
-    const handleExtractTasks = async () => {
-        setAiLoading(true);
-        try {
-            const response = await aiApi.getNoteTasks(id);
-            setTasks(response.data.tasks);
-        } catch (error) {
-            console.error('Failed to extract tasks:', error);
-            alert('AI task extraction failed.');
-        } finally {
-            setAiLoading(false);
-        }
-    };
+    const renderContent = () => {
+        if (!note?.content) return <p className="text-gray-400 italic">No content</p>;
 
-    const handleGenerateFlashcards = async () => {
-        setAiLoading(true);
-        try {
-            const response = await aiApi.flashcards(id);
-            setFlashcards(response.data.flashcards);
-        } catch (error) {
-            console.error('Failed to generate flashcards:', error);
-            alert('AI flashcard generation failed.');
-        } finally {
-            setAiLoading(false);
-        }
-    };
+        const customStyle = {
+            backgroundColor: note.meta_data?.bgColor || 'transparent',
+            color: note.meta_data?.textColor || 'inherit',
+            padding: '2rem',
+            borderRadius: '1rem',
+        };
 
-    const handleFindRelated = async () => {
-        setAiLoading(true);
-        try {
-            const response = await aiApi.getRelatedNotes(id);
-            setRelatedNotes(response.data.related_notes);
-        } catch (error) {
-            console.error('Failed to find related notes:', error);
-            alert('AI related notes search failed.');
-        } finally {
-            setAiLoading(false);
+        // If simple text (legacy), render as markdown/text. 
+        // With Quill, content is HTML.
+        const isHtml = /<\/?[a-z][\s\S]*>/i.test(note.content);
+
+        if (isHtml) {
+            // Need to process mermaid blocks inside HTML
+            // This is a naive implementation; for robust parsing, use a parser
+            return (
+                <div
+                    className="prose prose-lg dark:prose-invert max-w-none ql-editor"
+                    style={customStyle}
+                    dangerouslySetInnerHTML={{ __html: note.content }}
+                />
+            );
+        } else {
+            // Fallback for old notes
+            return (
+                <div className="prose prose-lg dark:prose-invert max-w-none whitespace-pre-wrap" style={customStyle}>
+                    {note.content}
+                </div>
+            );
         }
     };
 
     if (loading) {
         return (
-            <AppLayout>
-                <div className="flex items-center justify-center h-96">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
+
+    if (!note) return null;
+
+    if (isLocked) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                    <Lock className="w-10 h-10 text-gray-400" />
                 </div>
-            </AppLayout>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">This note is locked</h2>
+                <button
+                    onClick={() => { setLockType('unlock'); setShowLockModal(true); }}
+                    className="px-6 py-2 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition"
+                >
+                    Unlock Note
+                </button>
+                <LockModal
+                    isLocking={false}
+                    onUnlock={async (pin) => {
+                        await notesApi.privacy.unlockNote(id, pin);
+                        fetchNote(); // Reload content
+                    }}
+                    onClose={() => setShowLockModal(false)}
+                />
+            </div>
         );
     }
 
     return (
         <AppLayout>
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="min-h-full bg-white dark:bg-gray-950 pb-20 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <Link
-                        to="/notes"
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                        Back to Notes
-                    </Link>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleExportPdf}
-                            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg border border-gray-300 transition"
-                        >
-                            <Download className="w-4 h-4" />
-                            Export PDF
-                        </button>
-                        <button
-                            onClick={() => setShowAIModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg transition"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            Ask AI
-                        </button>
-                        <button
-                            onClick={handleExtractTasks}
-                            disabled={aiLoading}
-                            className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-300 transition"
-                        >
-                            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckSquare className="w-4 h-4" />}
-                            Tasks
-                        </button>
-                        <button
-                            onClick={handleGenerateFlashcards}
-                            disabled={aiLoading}
-                            className="flex items-center gap-2 px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg border border-orange-300 transition"
-                        >
-                            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
-                            Flashcards
-                        </button>
-                        <button
-                            onClick={handleFindRelated}
-                            disabled={aiLoading}
-                            className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-300 transition"
-                        >
-                            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <List className="w-4 h-4" />}
-                            Related
-                        </button>
-                        <Link
-                            to={`/notes/${id}/edit`}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-                        >
-                            <Edit className="w-4 h-4" />
-                            Edit
-                        </Link>
-                        <button
-                            onClick={handleDelete}
-                            className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg border border-red-300 transition"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                        </button>
-                    </div>
-                </div>
-
-                {/* Note Content */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div className="p-8 space-y-6">
-                        {/* Title & Meta */}
-                        <div>
-                            <div className="flex items-start justify-between mb-2">
-                                <h1 className="text-4xl font-bold text-gray-900">{note.title}</h1>
-                                {note.is_favorite && <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />}
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <span className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4" />
-                                    Updated {new Date(note.updated_at).toLocaleString()}
-                                </span>
-                                {note.meta_data?.category && (
-                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium">
-                                        {note.meta_data.category}
+                <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+                    <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition"
+                            >
+                                <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                                    {note.title}
+                                </h1>
+                                <div className="flex items-center gap-3 text-xs font-medium text-gray-400 mt-1">
+                                    <span className="flex items-center gap-1">
+                                        <Calendar className="w-3 h-3" />
+                                        {new Date(note.updated_at).toLocaleDateString()}
                                     </span>
-                                )}
-                                <span>Version {note.version}</span>
+                                    {note.tags.map(tag => (
+                                        <span key={tag} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md">#{tag}</span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Tags */}
-                        {note.tags && note.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {note.tags.map((tag, idx) => (
-                                    <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                                        {tag}
-                                    </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleArchive}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 hover:text-amber-600 transition"
+                                title={note.is_archived ? "Unarchive" : "Archive"}
+                            >
+                                {note.is_archived ? <RefreshCw className="w-5 h-5" /> : <ArchiveIcon className="w-5 h-5" />}
+                            </button>
+                            <button
+                                onClick={() => navigate(`/notes/${id}/edit`)}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 hover:text-primary-600 transition"
+                                title="Edit"
+                            >
+                                <Edit2 className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-gray-500 hover:text-red-600 transition"
+                                title="Delete"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Content Body */}
+                <div className="max-w-5xl mx-auto px-6 py-10">
+                    <div className="min-h-[50vh] transition-all bg-white dark:bg-gray-900 rounded-3xl p-1 shadow-sm border border-gray-100 dark:border-gray-800">
+                        {renderContent()}
+                    </div>
+
+                    {/* Attachments Section */}
+                    {note.files && note.files.length > 0 && (
+                        <div className="mt-12">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
+                                <Paperclip className="w-5 h-5" />
+                                Attachments ({note.files.length})
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {note.files.map(file => (
+                                    <div
+                                        key={file.id}
+                                        className="group relative aspect-square bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden cursor-pointer hover:shadow-lg transition"
+                                        onClick={() => { setSelectedFileId(file.id); setShowFileModal(true); }}
+                                    >
+                                        {file.file_type.startsWith('image/') ? (
+                                            <img src={`/api/files/${file.id}/thumbnail`} alt={file.filename} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                                <FileText className="w-10 h-10 mb-2" />
+                                                <span className="text-xs font-bold uppercase">{file.file_type.split('/')[1]}</span>
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center text-white p-4 text-center">
+                                            <p className="text-sm font-bold truncate w-full">{file.original_filename}</p>
+                                            <p className="text-xs opacity-75">{(file.file_size / 1024).toFixed(0)} KB</p>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
-                        )}
-
-                        {/* Content */}
-                        <div
-                            className="prose prose-blue max-w-none"
-                            dangerouslySetInnerHTML={{ __html: note.content || 'No content' }}
-                        />
-
-                        {/* Files */}
-                        {note.files && note.files.length > 0 && (
-                            <div className="border-t border-gray-200 pt-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
-                                <div className="space-y-2">
-                                    {note.files.map((file) => (
-                                        <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition">
-                                            <div
-                                                className="cursor-pointer flex-1"
-                                                onClick={() => {
-                                                    setViewerFileId(file.id);
-                                                    setShowViewer(true);
-                                                }}
-                                            >
-                                                <p className="font-medium text-blue-600 hover:underline">{file.original_filename}</p>
-                                                <p className="text-sm text-gray-500">
-                                                    {(file.file_size / 1024).toFixed(2)} KB
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleExportPdf()} // Existing download logic
-                                                    className="text-gray-400 hover:text-blue-600 p-2"
-                                                >
-                                                    <Download className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* AI Insights Board */}
-                {(tasks || flashcards || relatedNotes) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
-                        {tasks && tasks.length > 0 && (
-                            <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 shadow-sm">
-                                <h3 className="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">
-                                    <CheckSquare className="w-5 h-5" />
-                                    Extracted Tasks
-                                </h3>
-                                <ul className="space-y-3">
-                                    {tasks.map((t, idx) => (
-                                        <li key={idx} className="flex items-start gap-3 p-2 bg-white/50 rounded-lg">
-                                            <div className="mt-1 w-5 h-5 rounded border border-emerald-300 flex-shrink-0"></div>
-                                            <div>
-                                                <p className="font-medium text-emerald-900">{t.task}</p>
-                                                {t.deadline && <p className="text-xs text-emerald-600 font-medium">Due: {t.deadline}</p>}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {flashcards && flashcards.length > 0 && (
-                            <div className="bg-orange-50 rounded-2xl p-6 border border-orange-100 shadow-sm">
-                                <h3 className="text-lg font-bold text-orange-900 mb-4 flex items-center gap-2">
-                                    <Brain className="w-5 h-5" />
-                                    Flashcards
-                                </h3>
-                                <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                                    {flashcards.map((f, idx) => (
-                                        <div key={idx} className="p-4 bg-white/60 rounded-xl border border-orange-100">
-                                            <p className="font-bold text-orange-900 text-sm">Q: {f.question}</p>
-                                            <p className="text-orange-800 text-sm mt-2 pt-2 border-t border-orange-100 italic">A: {f.answer}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {relatedNotes && relatedNotes.length > 0 && (
-                            <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100 shadow-sm md:col-span-2">
-                                <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
-                                    <List className="w-5 h-5" />
-                                    Related Notes
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {relatedNotes.map(rn => (
-                                        <Link
-                                            key={rn.id}
-                                            to={`/notes/${rn.id}`}
-                                            className="p-4 bg-white/50 rounded-xl hover:bg-white transition-all border border-blue-100 hover:shadow-md flex items-center gap-2 text-blue-800 font-medium"
-                                        >
-                                            <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-                                            {rn.title}
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Version History */}
-                {versions.length > 0 && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Version History</h3>
-                        <div className="space-y-3">
-                            {versions.map((version) => (
-                                <div key={version.id} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0">
-                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm">
-                                        v{version.version_number}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-gray-900">{version.title}</p>
-                                        <p className="text-sm text-gray-500">
-                                            {new Date(version.created_at).toLocaleString()}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                {/* Modals */}
+                <FileViewerModal
+                    isOpen={showFileModal}
+                    onClose={() => setShowFileModal(false)}
+                    fileId={selectedFileId}
+                />
             </div>
-            <AIModal
-                isOpen={showAIModal}
-                onClose={() => {
-                    setShowAIModal(false);
-                    setAiContext(null);
-                }}
-                onAddToNote={() => fetchNoteAndVersions()} // Refresh if AI adds something (though in detail view we might just show it)
-                context={aiContext || note?.content}
-            />
-            <FileViewerModal
-                isOpen={showViewer}
-                onClose={() => setShowViewer(false)}
-                fileId={viewerFileId}
-                onAskAI={(text) => {
-                    setAiContext(text);
-                    setShowAIModal(true);
-                }}
-            />
         </AppLayout>
     );
 }

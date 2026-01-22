@@ -16,138 +16,129 @@ export default function Home() {
             })
             .finally(() => setLoading(false));
     }, []);
+
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             {/* HERO SECTION */}
-            <header className="text-center py-24 px-6 bg-gradient-to-b from-white to-gray-100">
-                <h1 className="text-6xl font-extrabold text-gray-900 mb-4">
-                    Note AI Pro
-                </h1>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-                    Your intelligent workspace — write, upload, share, speak, convert, analyze,
-                    and organize your notes with AI-powered precision.
-                </p>
+            <header className="text-center py-20 px-6 bg-white border-b border-gray-200">
+                <div className="max-w-4xl mx-auto">
+                    <div className="inline-block px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm font-medium mb-6">
+                        Latest: AI-Powered Notes v2.0
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight mb-6">
+                        Your intelligent workspace for <span className="text-primary-600">better ideas</span>.
+                    </h1>
+                    <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+                        Write, upload, analyze, and organize your notes with AI precision. The clutter-free workspace for modern professionals.
+                    </p>
 
-                <div className="flex justify-center gap-4">
-                    <Link
-                        to="/signup"
-                        className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition transform hover:scale-105"
-                    >
-                        Get Started Free
-                    </Link>
-                    <Link
-                        to="/login"
-                        className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-800 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition border-2 border-gray-200"
-                    >
-                        Sign In
-                    </Link>
-                </div>
+                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <Link
+                            to="/signup"
+                            className="px-8 py-3.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-lg font-semibold shadow-sm hover:shadow transition-all"
+                        >
+                            Get Started Free
+                        </Link>
+                        <Link
+                            to="/login"
+                            className="px-8 py-3.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-lg text-lg font-medium border border-gray-300 shadow-sm transition-colors"
+                        >
+                            Sign In
+                        </Link>
+                    </div>
 
-                {/* BACKEND STATUS */}
-                <div className="mt-10 flex justify-center items-center gap-3 text-sm">
-                    {loading ? (
-                        <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                            <span className="text-gray-600">{status}</span>
-                        </>
-                    ) : status.includes("Connected") ? (
-                        <>
-                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                            <span className="text-green-700 font-medium">{status}</span>
-                        </>
-                    ) : (
-                        <>
-                            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                            <span className="text-red-700 font-medium">{status}</span>
-                        </>
-                    )}
+                    {/* BACKEND STATUS */}
+                    <div className="mt-12 flex justify-center items-center gap-2 text-sm text-gray-500">
+                        {loading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
+                                <span>Checking status...</span>
+                            </>
+                        ) : status.includes("Connected") ? (
+                            <>
+                                <span className="flex h-2 w-2 relative">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </span>
+                                <span className="text-gray-600">{status}</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="h-2 w-2 rounded-full bg-red-500"></span>
+                                <span className="text-gray-600">{status}</span>
+                            </>
+                        )}
+                    </div>
                 </div>
             </header>
 
-            {/* PROFESSIONAL FEATURE SECTION */}
-            <section className="py-20 px-6 max-w-6xl mx-auto">
-                <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
-                    Powerful Features for Modern Productivity
-                </h2>
+            {/* FEATURES GRID */}
+            <section className="py-24 px-6 bg-gray-50">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                            Everything you need to be productive
+                        </h2>
+                        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                            Powerful features wrapped in a simple, distraction-free interface.
+                        </p>
+                    </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
-                    <FeatureCard
-                        title="Smart Writing"
-                        desc="Create beautiful notes with our AI-powered editor. Get real-time suggestions and formatting help."
-                        icon="✏️"
-                    />
-
-                    <FeatureCard
-                        title="File Upload"
-                        desc="Upload PDFs, images, and documents. AI extracts and organizes all content automatically."
-                        icon="📤"
-                    />
-
-                    <FeatureCard
-                        title="AI Assistant"
-                        desc="Summaries, rewriting, explanations, translations — all powered by advanced AI models."
-                        icon="🤖"
-                    />
-
-                    <FeatureCard
-                        title="Easy Sharing"
-                        desc="Share notes with your team or make them public with one click. Control access with passwords."
-                        icon="🔗"
-                    />
-
-                    <FeatureCard
-                        title="Text to Speech"
-                        desc="Convert your notes into natural-sounding audio for easy listening on the go."
-                        icon="🎧"
-                    />
-
-                    <FeatureCard
-                        title="Analytics"
-                        desc="Track your productivity with insights, charts, and activity timelines."
-                        icon="📊"
-                    />
-                </div>
-            </section>
-
-            {/* HOW IT WORKS SECTION */}
-            <section className="py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
-                <h2 className="text-4xl font-bold text-center text-gray-900 mb-6">
-                    How It Works
-                </h2>
-                <p className="max-w-3xl mx-auto text-center text-lg text-gray-700 mb-12">
-                    Note AI Pro is designed for creators, students, professionals, and teams who want
-                    a faster, smarter, and cleaner way to work with information.
-                </p>
-
-                <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6 text-gray-800">
-                    <StepCard number="1" title="Create Account" desc="Sign up in seconds and access your private workspace" />
-                    <StepCard number="2" title="Start Writing" desc="Use our rich text editor or upload documents" />
-                    <StepCard number="3" title="AI Tools" desc="Summarize, rewrite, explain, or translate with one click" />
-                    <StepCard number="4" title="Organize & Share" desc="Tag, categorize, and share your notes securely" />
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <FeatureCard
+                            title="Smart Editor"
+                            desc="Distraction-free writing with AI-powered suggestions and formatting."
+                            icon="✨"
+                        />
+                        <FeatureCard
+                            title="File Analysis"
+                            desc="Upload PDFs and images. Let AI extract text and insights instantly."
+                            icon="📄"
+                        />
+                        <FeatureCard
+                            title="AI Assistant"
+                            desc="Summarize, rewrite, and translate your notes with one click."
+                            icon="🤖"
+                        />
+                        <FeatureCard
+                            title="Secure Sharing"
+                            desc="Share specific notes with password protection and expiration dates."
+                            icon="🔒"
+                        />
+                        <FeatureCard
+                            title="Audio Notes"
+                            desc="Convert your written notes into natural-sounding audio."
+                            icon="🎧"
+                        />
+                        <FeatureCard
+                            title="Deep Analytics"
+                            desc="Visualize your productivity habits and note-taking trends."
+                            icon="📊"
+                        />
+                    </div>
                 </div>
             </section>
 
             {/* CTA SECTION */}
-            <section className="py-20 px-6 bg-blue-600 text-white">
+            <section className="py-24 px-6 bg-white border-t border-gray-200">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-4xl font-bold mb-4">
-                        Ready to supercharge your productivity?
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                        Ready to simplify your workflow?
                     </h2>
-                    <p className="text-xl mb-8 opacity-90">
-                        Join thousands of users who organize their thoughts with AI
+                    <p className="text-xl text-gray-600 mb-10">
+                        Join thousands of professionals organizing their thoughts with NoteAI Pro.
                     </p>
                     <Link
                         to="/signup"
-                        className="inline-block px-10 py-4 bg-white text-blue-600 rounded-xl text-lg font-bold shadow-xl hover:shadow-2xl transition transform hover:scale-105"
+                        className="inline-block px-8 py-3.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-lg font-semibold transition-colors"
                     >
-                        Start Free Today
+                        Start Your Free Trial
                     </Link>
                 </div>
             </section>
 
-            <footer className="text-center py-8 text-gray-500 bg-gray-50">
-                © {new Date().getFullYear()} Note AI Pro — All Rights Reserved.
+            <footer className="py-8 text-center text-sm text-gray-500 bg-gray-50 border-t border-gray-200">
+                <p>© {new Date().getFullYear()} Note AI Pro. All rights reserved.</p>
             </footer>
         </div>
     );
@@ -155,24 +146,12 @@ export default function Home() {
 
 function FeatureCard({ title, desc, icon }) {
     return (
-        <div className="p-8 bg-white shadow-md rounded-2xl hover:shadow-xl transition text-center border border-gray-100">
-            <div className="text-5xl mb-4">{icon}</div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-3">{title}</h3>
+        <div className="group p-8 bg-white rounded-xl border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform duration-200">
+                {icon}
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
             <p className="text-gray-600 leading-relaxed">{desc}</p>
-        </div>
-    );
-}
-
-function StepCard({ number, title, desc }) {
-    return (
-        <div className="flex gap-4 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="flex-shrink-0 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold">
-                {number}
-            </div>
-            <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-1">{title}</h4>
-                <p className="text-gray-600">{desc}</p>
-            </div>
         </div>
     );
 }

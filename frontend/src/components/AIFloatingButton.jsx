@@ -68,7 +68,7 @@ export default function AIFloatingButton({ onClick }) {
                 cursor: isDragging ? 'grabbing' : 'grab',
                 zIndex: 9999
             }}
-            className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
+            className="w-16 h-16 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border-2 border-white dark:border-gray-800"
             title="AI Assistant"
         >
             <Sparkles className="w-7 h-7" />

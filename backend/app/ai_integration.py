@@ -4,7 +4,7 @@ AI Integration using OpenRouter (OpenAI-compatible)
 """
 from openai import AsyncOpenAI
 from typing import Optional, Dict, Any, List
-from backend.app.config import get_settings
+from .config import get_settings
 
 settings = get_settings()
 

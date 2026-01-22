@@ -15,6 +15,7 @@ import NoteDetail from './pages/NoteDetail';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Analytics from './pages/Analytics';
+import Archive from './pages/Archive';
 
 // Landing page or Dashboard redirect
 function IndexRedirect() {
@@ -91,6 +92,12 @@ function App() {
             <Route path="/analytics" element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/archive" element={
+              <ProtectedRoute>
+                <Archive />
               </ProtectedRoute>
             } />
 

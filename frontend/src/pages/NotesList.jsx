@@ -25,7 +25,7 @@ export default function NotesList() {
 
     const fetchNotes = async () => {
         try {
-            const response = await notesApi.getAll();
+            const response = await notesApi.getAll(0, 100, false);
             setNotes(response.data);
         } catch (error) {
             console.error('Failed to fetch notes:', error);
@@ -444,51 +444,51 @@ export default function NotesList() {
                     </div>
                 )}
             </div>
-    {/* Summary Side Panel */ }
-{
-    showSummary && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-            <div className="absolute inset-0 bg-black bg-opacity-25" onClick={() => setShowSummary(false)}></div>
-            <div className="relative w-full max-w-md bg-white shadow-2xl h-full overflow-y-auto transform transition-transform duration-300 ease-in-out">
-                <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">Summary</h2>
-                        <button
-                            onClick={() => setShowSummary(false)}
-                            className="p-2 hover:bg-gray-100 rounded-full transition"
-                        >
-                            <X className="w-5 h-5 text-gray-500" />
-                        </button>
-                    </div>
+            {/* Summary Side Panel */}
+            {
+                showSummary && (
+                    <div className="fixed inset-0 z-50 flex justify-end">
+                        <div className="absolute inset-0 bg-black bg-opacity-25" onClick={() => setShowSummary(false)}></div>
+                        <div className="relative w-full max-w-md bg-white shadow-2xl h-full overflow-y-auto transform transition-transform duration-300 ease-in-out">
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-bold text-gray-900">Summary</h2>
+                                    <button
+                                        onClick={() => setShowSummary(false)}
+                                        className="p-2 hover:bg-gray-100 rounded-full transition"
+                                    >
+                                        <X className="w-5 h-5 text-gray-500" />
+                                    </button>
+                                </div>
 
-                    <div className="bg-indigo-50 rounded-xl p-4 mb-6">
-                        <h3 className="font-medium text-indigo-900 mb-1">Note: {summaryNote?.title}</h3>
-                        <p className="text-sm text-indigo-700">AI-generated summary</p>
-                    </div>
+                                <div className="bg-indigo-50 rounded-xl p-4 mb-6">
+                                    <h3 className="font-medium text-indigo-900 mb-1">Note: {summaryNote?.title}</h3>
+                                    <p className="text-sm text-indigo-700">AI-generated summary</p>
+                                </div>
 
-                    <div className="prose prose-indigo max-w-none">
-                        <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                            {summaryText}
+                                <div className="prose prose-indigo max-w-none">
+                                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                                        {summaryText}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    )
-}
+                )
+            }
 
-{/* Lock Modal */ }
-{
-    lockModalNote && (
-        <LockModal
-            isOpen={!!lockModalNote}
-            onClose={() => setLockModalNote(null)}
-            onSubmit={isLocking ? handleLockSubmit : handleUnlockSubmit}
-            mode={isLocking ? 'lock' : 'unlock'}
-            noteTitle={lockModalNote.title}
-        />
-    )
-}
+            {/* Lock Modal */}
+            {
+                lockModalNote && (
+                    <LockModal
+                        isOpen={!!lockModalNote}
+                        onClose={() => setLockModalNote(null)}
+                        onSubmit={isLocking ? handleLockSubmit : handleUnlockSubmit}
+                        mode={isLocking ? 'lock' : 'unlock'}
+                        noteTitle={lockModalNote.title}
+                    />
+                )
+            }
 
         </AppLayout >
     );

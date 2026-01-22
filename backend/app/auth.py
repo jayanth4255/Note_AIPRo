@@ -9,9 +9,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from backend.app.database import get_db
-from backend.app.models import User
-from backend.app.config import get_settings
+from .database import get_db
+from .models import User
+from .config import get_settings
 import secrets
 
 settings = get_settings()

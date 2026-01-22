@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, and_
 from typing import List, Optional
 from datetime import datetime, timedelta
-from backend.app import models, schemas, auth
+from . import models, schemas, auth
 from fastapi import HTTPException, status
 
 
@@ -87,11 +87,11 @@ def reset_password(db: Session, token: str, new_password: str) -> bool:
 
 # ==================== NOTE OPERATIONS ====================
 
-def get_notes(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Note]:
-    """Get all notes for a user"""
+def get_notes(db: Session, user_id: int, skip: int = 0, limit: int = 100, archived: bool = False) -> List[models.Note]:
+    """Get all notes for a user (default: non-archived)"""
     return db.query(models.Note).filter(
         models.Note.user_id == user_id,
-        models.Note.is_archived == False
+        models.Note.is_archived == archived
     ).order_by(models.Note.updated_at.desc()).offset(skip).limit(limit).all()
 
 
@@ -169,6 +169,32 @@ def delete_note(db: Session, note_id: int, user_id: int) -> bool:
                    description=f"Deleted note: {db_note.title}")
     
     return True
+
+
+def archive_note(db: Session, note_id: int, user_id: int) -> Optional[models.Note]:
+    """Archive a note"""
+    db_note = get_note_by_id(db, note_id, user_id)
+    if not db_note:
+        return None
+    
+    db_note.is_archived = True
+    db_note.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_note)
+    return db_note
+
+
+def unarchive_note(db: Session, note_id: int, user_id: int) -> Optional[models.Note]:
+    """Unarchive a note"""
+    db_note = get_note_by_id(db, note_id, user_id)
+    if not db_note:
+        return None
+    
+    db_note.is_archived = False
+    db_note.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_note)
+    return db_note
 
 
 def search_notes(db: Session, user_id: int, search_params: schemas.NoteSearch) -> List[models.Note]:
