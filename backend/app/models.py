@@ -4,7 +4,7 @@ SQLAlchemy models for NoteAI Pro with PostgreSQL BYTEA file storage
 """
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, LargeBinary, JSON, ARRAY
 from sqlalchemy.orm import relationship
-from .database import Base
+from backend.app.database import Base
 from datetime import datetime
 import secrets
 import uuid

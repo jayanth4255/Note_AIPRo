@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, and_
 from typing import List, Optional
 from datetime import datetime, timedelta
-from . import models, schemas, auth
+from backend.app import models, schemas, auth
 from fastapi import HTTPException, status
 
 
