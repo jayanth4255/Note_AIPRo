@@ -25,7 +25,7 @@ export default function NotesList() {
 
     const fetchNotes = async () => {
         try {
-            const response = await notesApi.getAll(0, 100, false);
+            const response = await notesApi.getAll({ skip: 0, limit: 100, archived: false });
             setNotes(response.data);
         } catch (error) {
             console.error('Failed to fetch notes:', error);

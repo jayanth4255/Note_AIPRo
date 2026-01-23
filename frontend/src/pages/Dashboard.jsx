@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { notesApi, analyticsApi, aiApi } from '../services/api';
-import { FileText, Plus, TrendingUp, Clock, Star, Sparkles, Search, Brain, Loader2, MessageSquare, Calendar } from 'lucide-react';
+import { notesApi, aiApi } from '../services/api';
+import { FileText, Plus, Clock, Star, Sparkles, Search, Brain, Loader2, MessageSquare, Calendar } from 'lucide-react';
+import toast from 'react-hot-toast';
 import AppLayout from '../components/AppLayout';
 
 export default function Dashboard() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [recentNotes, setRecentNotes] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -60,6 +62,28 @@ export default function Dashboard() {
             setAskNotesAnswer({ answer: 'Sorry, I encountered an error processing your question.' });
         } finally {
             setAskNotesLoading(false);
+        }
+    };
+
+    const handleCreateNoteFromAI = async () => {
+        if (!askNotesAnswer) return;
+
+        try {
+            const title = `AI Answer: ${askNotesQuery}`;
+            const content = `<h3>Question: ${askNotesQuery}</h3><p>${askNotesAnswer.answer}</p>`;
+            const noteData = {
+                title,
+                content,
+                tags: ['AI', 'Q&A'],
+                meta_data: { source: 'dashboard_ai' }
+            };
+
+            const response = await notesApi.create(noteData);
+            toast.success('Note created from answer');
+            navigate(`/notes/${response.data.id}/edit`);
+        } catch (error) {
+            console.error('Failed to create note from AI:', error);
+            toast.error('Failed to create note');
         }
     };
 
@@ -136,109 +160,116 @@ export default function Dashboard() {
                                         {askNotesAnswer.notes_searched && (
                                             <p className="text-xs text-gray-400 mt-2">Searched {askNotesAnswer.notes_searched} notes</p>
                                         )}
+                                        <button
+                                            onClick={handleCreateNoteFromAI}
+                                            className="mt-3 text-xs flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-900 border border-indigo-100 dark:border-indigo-900 text-indigo-600 dark:text-indigo-400 font-bold rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition"
+                                        >
+                                            <Plus className="w-3 h-3" />
+                                            Save as Note
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Daily Brief */}
-                    <div className="card p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
-                                <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Daily Brief</h2>
-                                <p className="text-gray-500 dark:text-gray-400 text-xs">AI summary of your week</p>
-                            </div>
-                        </div>
-                        {briefLoading ? (
-                            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm py-4">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>Generating your personalized brief...</span>
-                            </div>
-                        ) : dailyBrief?.brief ? (
-                            <div className="space-y-3">
-                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{dailyBrief.brief}</p>
-                                <div className="flex gap-4 text-xs text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-800">
-                                    <span>{dailyBrief.recent_notes_count} recent notes</span>
-                                    <span>{dailyBrief.pending_tasks_count} pending tasks</span>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-4">
-                                <p className="text-sm text-gray-500 mb-3">Get a personalized summary of your week using AI.</p>
-                                <button
-                                    onClick={fetchDailyBrief}
-                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition shadow-sm hover:shadow flex items-center justify-center gap-2 mx-auto"
-                                >
-                                    <Sparkles className="w-4 h-4" />
-                                    Generate Report
-                                </button>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Recent Notes */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-gray-400" />
-                            Recent Notes
-                        </h2>
-                        <Link to="/notes" className="text-sm text-primary-600 hover:text-primary-700 font-medium hover:underline">
-                            View all
-                        </Link>
+                {/* Daily Brief */}
+                <div className="card p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
+                            <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Daily Brief</h2>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">AI summary of your week</p>
+                        </div>
                     </div>
-
-                    {recentNotes.length === 0 ? (
-                        <div className="card p-8 text-center">
-                            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No notes yet</h3>
-                            <p className="text-gray-500 mb-4 text-sm">Create your first note to get started</p>
-                            <Link
-                                to="/notes/new"
-                                className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Create Note
-                            </Link>
+                    {briefLoading ? (
+                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm py-4">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Generating your personalized brief...</span>
+                        </div>
+                    ) : dailyBrief?.brief ? (
+                        <div className="space-y-3">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{dailyBrief.brief}</p>
+                            <div className="flex gap-4 text-xs text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-800">
+                                <span>{dailyBrief.recent_notes_count} recent notes</span>
+                                <span>{dailyBrief.pending_tasks_count} pending tasks</span>
+                            </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {recentNotes.map((note) => (
-                                <Link
-                                    key={note.id}
-                                    to={`/notes/${note.id}`}
-                                    className="card p-4 hover:shadow-md transition-shadow group border border-gray-200 dark:border-gray-800"
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                                            {note.title}
-                                            {note.is_locked && <span className="ml-2 text-xs">🔒</span>}
-                                        </h3>
-                                        {note.is_favorite && (
-                                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 flex-shrink-0" />
-                                        )}
-                                    </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 h-10">
-                                        {note.content?.replace(/<[^>]*>/g, '') || 'No content'}
-                                    </p>
-                                    <div className="flex items-center justify-between text-xs text-gray-400">
-                                        <span>{new Date(note.updated_at).toLocaleDateString()}</span>
-                                        {note.tags && note.tags.length > 0 && (
-                                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">
-                                                {note.tags[0]}
-                                            </span>
-                                        )}
-                                    </div>
-                                </Link>
-                            ))}
+                        <div className="text-center py-4">
+                            <p className="text-sm text-gray-500 mb-3">Get a personalized summary of your week using AI.</p>
+                            <button
+                                onClick={fetchDailyBrief}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition shadow-sm hover:shadow flex items-center justify-center gap-2 mx-auto"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                Generate Report
+                            </button>
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* Recent Notes */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-gray-400" />
+                        Recent Notes
+                    </h2>
+                    <Link to="/notes" className="text-sm text-primary-600 hover:text-primary-700 font-medium hover:underline">
+                        View all
+                    </Link>
+                </div>
+
+                {recentNotes.length === 0 ? (
+                    <div className="card p-8 text-center">
+                        <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No notes yet</h3>
+                        <p className="text-gray-500 mb-4 text-sm">Create your first note to get started</p>
+                        <Link
+                            to="/notes/new"
+                            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Create Note
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {recentNotes.map((note) => (
+                            <Link
+                                key={note.id}
+                                to={`/notes/${note.id}`}
+                                className="card p-4 hover:shadow-md transition-shadow group border border-gray-200 dark:border-gray-800"
+                            >
+                                <div className="flex items-start justify-between mb-2">
+                                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                        {note.title}
+                                        {note.is_locked && <span className="ml-2 text-xs">🔒</span>}
+                                    </h3>
+                                    {note.is_favorite && (
+                                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 flex-shrink-0" />
+                                    )}
+                                </div>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 h-10">
+                                    {note.content?.replace(/<[^>]*>/g, '') || 'No content'}
+                                </p>
+                                <div className="flex items-center justify-between text-xs text-gray-400">
+                                    <span>{new Date(note.updated_at).toLocaleDateString()}</span>
+                                    {note.tags && note.tags.length > 0 && (
+                                        <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">
+                                            {note.tags[0]}
+                                        </span>
+                                    )}
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

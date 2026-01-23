@@ -1043,7 +1043,8 @@ async def ai_daily_brief_endpoint(
     week_ago = datetime.utcnow() - timedelta(days=7)
     recent_notes = db.query(models.Note).filter(
         models.Note.user_id == current_user.id,
-        models.Note.updated_at >= week_ago
+        models.Note.updated_at >= week_ago,
+        models.Note.is_archived == False
     ).order_by(models.Note.updated_at.desc()).limit(10).all()
     
     # Extract tasks from recent notes

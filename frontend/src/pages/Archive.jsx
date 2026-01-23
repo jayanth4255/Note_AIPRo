@@ -18,7 +18,7 @@ export default function Archive() {
         setLoading(true);
         try {
             // Fetch notes with archived=true
-            const response = await notesApi.getAll(0, 100, true);
+            const response = await notesApi.getAll({ skip: 0, limit: 100, archived: true });
             setNotes(response.data);
             setError(null);
         } catch (err) {
@@ -52,6 +52,13 @@ export default function Archive() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
+                        <button
+                            onClick={() => navigate('/notes')}
+                            className="bg-transparent hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg p-2 mb-2 transition flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 font-medium"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to Notes
+                        </button>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight flex items-center gap-3">
                             <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400">
                                 <ArchiveIcon className="w-8 h-8" />
