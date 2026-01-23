@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit2, Trash2, ArrowLeft, Calendar, Share2, Lock, Eye, EyeOff, Archive as ArchiveIcon, RefreshCw, Download } from 'lucide-react';
+import {
+    Edit2, Trash2, ArrowLeft, Calendar, Lock,
+    Archive as ArchiveIcon, RefreshCw,
+    Paperclip, FileText
+} from 'lucide-react';
 import { notesApi } from '../services/api';
 import toast from 'react-hot-toast';
 import mermaid from 'mermaid';

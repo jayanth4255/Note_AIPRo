@@ -120,21 +120,10 @@ export default function NoteEditor() {
     };
 
     const handleDrawingSave = (imageUrl) => {
-        const editor = quillRef.current?.getEditor();
-        if (editor) {
-            // Focus the editor to restore selection state if possible, or defaulting to end/start
-            // If we have a stored range or just append to end if lost? 
-            // Usually, getSelection(true) handles this by returning the last known range.
-            const range = editor.getSelection(true);
-            const index = range ? range.index : editor.getLength();
-
-            editor.insertEmbed(index, 'image', imageUrl);
-            // Move cursor after the image
-            editor.setSelection(index + 1);
-        }
-
-        // Auto save to ensure changes are persisted immediately
-        setTimeout(() => handleSave(true), 100);
+        const range = quillRef.current?.getEditor().getSelection(true);
+        // Assuming your backend serves the file at /api/files/{id} and it's public/authenticated correctly
+        // Or better, insert it as an image tag if Quill supports it
+        quillRef.current?.getEditor().insertEmbed(range ? range.index : 0, 'image', imageUrl);
     };
 
     const handleKeyDown = (e) => {
