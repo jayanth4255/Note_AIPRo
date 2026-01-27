@@ -6,7 +6,7 @@ Auto-creates missing tables/columns on startup (for small projects)
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from app.config import get_settings
+from .config import get_settings
 
 settings = get_settings()
 
