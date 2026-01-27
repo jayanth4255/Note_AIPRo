@@ -84,7 +84,7 @@ async def signup(user: schemas.UserCreate, response: Response, db: Session = Dep
         httponly=True,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        samesite="lax",
+        samesite="none" if not settings.DEBUG else "lax",
         secure=not settings.DEBUG  # True in production
     )
     
@@ -125,7 +125,7 @@ async def login(user: schemas.UserLogin, response: Response, db: Session = Depen
         httponly=True,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        samesite="lax",
+        samesite="none" if not settings.DEBUG else "lax",
         secure=not settings.DEBUG  # True in production
     )
     
@@ -139,7 +139,12 @@ async def login(user: schemas.UserLogin, response: Response, db: Session = Depen
 @app.post("/api/auth/logout")
 async def logout(response: Response):
     """Logout user and clear JWT cookie"""
-    response.delete_cookie(key="access_token")
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite="none" if not settings.DEBUG else "lax",
+        secure=not settings.DEBUG
+    )
     return {"message": "Logged out successfully"}
 
 
