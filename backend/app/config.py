@@ -37,13 +37,13 @@ class Settings(BaseSettings):
     ALLOWED_FILE_TYPES: str = "pdf,doc,docx,txt,png,jpg,jpeg,gif,mp3,mp4,wav,mov"
     
     # CORS
-    CORS_ORIGINS: str = "http://localhost:5174,http://localhost:5173,http://localhost:3000"
-    
+    CORS_ORIGINS: str = "https://note-aipro-frontend.onrender.com,http://localhost:5173,http://localhost:5174"
+
     # Redis (Optional)
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # App
-    DEBUG: bool = True
+    DEBUG: bool = False
     APP_NAME: str = "NoteAI Pro"
     
     @property
