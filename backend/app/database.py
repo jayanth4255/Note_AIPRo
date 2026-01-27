@@ -1,35 +1,48 @@
 # backend/app/database.py
 """
 Database connection and session management for PostgreSQL
+Auto-creates missing tables/columns on startup (for small projects)
 """
+
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from .config import get_settings
+from sqlalchemy.orm import sessionmaker, declarative_base
+from app.config import get_settings
 
 settings = get_settings()
 
-# Create PostgreSQL engine with connection pooling
+# -----------------------------
+# Create PostgreSQL engine
+# -----------------------------
 engine = create_engine(
     settings.database_url_validated,
     echo=settings.DEBUG,
-    pool_pre_ping=True,  # Enable connection health checks
-    pool_size=10,  # Connection pool size
-    max_overflow=20,  # Max overflow connections
+    pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20,
 )
 
+# -----------------------------
 # Session factory
+# -----------------------------
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# -----------------------------
 # Base class for models
+# -----------------------------
 Base = declarative_base()
 
+# -----------------------------
+# Create tables automatically
+# -----------------------------
+def init_db():
+    from app import models  # ensures all models are imported
+    Base.metadata.create_all(bind=engine)
 
+
+# -----------------------------
+# Dependency for DB session
+# -----------------------------
 def get_db():
-    """
-    Dependency function to get database session
-    Automatically closes session after request
-    """
     db = SessionLocal()
     try:
         yield db

@@ -15,6 +15,9 @@ from .database import get_db, engine, Base
 from .config import get_settings
 from . import models, schemas, crud, auth, ai_integration, file_handler, pdf_export
 
+from app.database import init_db
+init_db()
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
@@ -108,6 +111,7 @@ async def login(user: schemas.UserLogin, response: Response, db: Session = Depen
         )
     
     # Generate token
+    
     access_token = auth.create_access_token({"user_id": db_user.id})
     
     # Update last login
