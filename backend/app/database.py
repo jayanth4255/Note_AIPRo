@@ -35,7 +35,7 @@ Base = declarative_base()
 # Create tables automatically
 # -----------------------------
 def init_db():
-    from app import models  # ensures all models are imported
+    from . import models  # ensures all models are imported
     Base.metadata.create_all(bind=engine)
 
 
