@@ -15,12 +15,9 @@ from .database import get_db, engine, Base
 from .config import get_settings
 from . import models, schemas, crud, auth, ai_integration, file_handler, pdf_export
 
-<<<<<<< HEAD
 from .database import init_db
 init_db()
 
-=======
->>>>>>> 4bd5703 (Successfully add the delete button)
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
