@@ -2,6 +2,7 @@
 """
 CRUD operations for database models
 """
+import re
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, and_
 from typing import List, Optional
@@ -22,22 +23,66 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[models.User]:
     return db.query(models.User).filter(models.User.id == user_id).first()
 
 
+
+
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     """Create a new user"""
+
+    # ✅ Name validation (no only numbers / symbols)
+    if not user.name.replace(" ", "").isalpha():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Name must contain only alphabets"
+        )
+
+    # ✅ Strict email validation (extra layer)
+    email_pattern = r"^[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+\.[A-Za-z]{2,}$"
+    if not re.fullmatch(email_pattern, user.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid email format"
+        )
+
+    if ".." in user.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email cannot contain consecutive dots"
+        )
+
+    # ✅ Check duplicate email
+    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+
+    # ✅ Password strength check
+    pwd = user.password
+    if len(pwd) < 8 or not any(c.isdigit() for c in pwd) or not any(c.isupper() for c in pwd):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 chars, include number and uppercase letter"
+        )
+
+    # ✅ Hash password
     hashed_password = auth.get_password_hash(user.password)
+
     db_user = models.User(
         name=user.name,
         email=user.email,
         hashed_password=hashed_password,
     )
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
-    # Log activity
+
+    # ✅ Log activity
     create_activity(db, user_id=db_user.id, activity_type="user_created", description="User account created")
-    
+
     return db_user
+
 
 
 def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate) -> models.User:
@@ -91,7 +136,8 @@ def get_notes(db: Session, user_id: int, skip: int = 0, limit: int = 100, archiv
     """Get all notes for a user (default: non-archived)"""
     return db.query(models.Note).filter(
         models.Note.user_id == user_id,
-        models.Note.is_archived == archived
+        models.Note.is_archived == archived,
+        models.Note.is_trash == False
     ).order_by(models.Note.updated_at.desc()).offset(skip).limit(limit).all()
 
 
@@ -155,20 +201,57 @@ def update_note(db: Session, note_id: int, note_update: schemas.NoteUpdate, user
     return db_note
 
 
-def delete_note(db: Session, note_id: int, user_id: int) -> bool:
-    """Delete a note"""
+def delete_note(db: Session, note_id: int, user_id: int, permanent: bool = False) -> bool:
+    """Delete a note (soft delete by default, moving to trash)"""
     db_note = get_note_by_id(db, note_id, user_id)
     if not db_note:
         return False
     
-    db.delete(db_note)
+    if permanent or db_note.is_trash:
+        # Permanent deletion
+        db.delete(db_note)
+        activity_type = "note_deleted_permanently"
+        desc = f"Permanently deleted note: {db_note.title}"
+    else:
+        # Move to trash
+        db_note.is_trash = True
+        db_note.updated_at = datetime.utcnow()
+        activity_type = "note_trashed"
+        desc = f"Moved note to trash: {db_note.title}"
+    
     db.commit()
     
     # Log activity
-    create_activity(db, user_id=user_id, activity_type="note_deleted",
-                   description=f"Deleted note: {db_note.title}")
+    create_activity(db, user_id=user_id, activity_type=activity_type,
+                   description=desc)
     
     return True
+
+
+def restore_note(db: Session, note_id: int, user_id: int) -> Optional[models.Note]:
+    """Restore a note from trash"""
+    db_note = get_note_by_id(db, note_id, user_id)
+    if not db_note:
+        return None
+    
+    db_note.is_trash = False
+    db_note.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_note)
+    
+    # Log activity
+    create_activity(db, user_id=user_id, activity_type="note_restored",
+                   description=f"Restored note from trash: {db_note.title}", note_id=note_id)
+    
+    return db_note
+
+
+def get_trashed_notes(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Note]:
+    """Get all trashed notes for a user"""
+    return db.query(models.Note).filter(
+        models.Note.user_id == user_id,
+        models.Note.is_trash == True
+    ).order_by(models.Note.updated_at.desc()).offset(skip).limit(limit).all()
 
 
 def archive_note(db: Session, note_id: int, user_id: int) -> Optional[models.Note]:
@@ -222,6 +305,13 @@ def search_notes(db: Session, user_id: int, search_params: schemas.NoteSearch) -
     # Filter by archived
     if search_params.is_archived is not None:
         query = query.filter(models.Note.is_archived == search_params.is_archived)
+    
+    # Filter by trash
+    if search_params.is_trash is not None:
+        query = query.filter(models.Note.is_trash == search_params.is_trash)
+    else:
+        # By default exclude trash unless explicitly requested
+        query = query.filter(models.Note.is_trash == False)
     
     # Date range
     if search_params.date_from:

@@ -6,20 +6,11 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [token, setToken] = useState(localStorage.getItem('token'));
 
-    // Set auth token in axios headers
     useEffect(() => {
-        if (token) {
-            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            localStorage.setItem('token', token);
-            fetchUser();
-        } else {
-            delete api.defaults.headers.common['Authorization'];
-            localStorage.removeItem('token');
-            setLoading(false);
-        }
-    }, [token]);
+        // Just try to fetch the user on mount to see if they are logged in via cookie
+        fetchUser();
+    }, []);
 
     const fetchUser = async () => {
         try {
@@ -35,20 +26,22 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         const response = await api.post('/api/auth/login', { email, password });
-        setToken(response.data.access_token);
         setUser(response.data.user);
         return response.data;
     };
 
     const signup = async (name, email, password) => {
         const response = await api.post('/api/auth/signup', { name, email, password });
-        setToken(response.data.access_token);
         setUser(response.data.user);
         return response.data;
     };
 
-    const logout = () => {
-        setToken(null);
+    const logout = async () => {
+        try {
+            await api.post('/api/auth/logout');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
         setUser(null);
     };
 

@@ -16,6 +16,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Analytics from './pages/Analytics';
 import Archive from './pages/Archive';
+import Trash from './pages/Trash';
 
 // Landing page or Dashboard redirect
 function IndexRedirect() {
@@ -98,6 +99,12 @@ function App() {
             <Route path="/archive" element={
               <ProtectedRoute>
                 <Archive />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/trash" element={
+              <ProtectedRoute>
+                <Trash />
               </ProtectedRoute>
             } />
 

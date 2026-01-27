@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-    Home, FileText, BarChart3, Settings, User, LogOut, Menu, X, Plus, Archive as ArchiveIcon
+    Home, FileText, BarChart3, Settings, User, LogOut, Menu, X, Plus, Archive as ArchiveIcon, Trash2
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
@@ -13,6 +13,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
         { path: '/dashboard', icon: Home, label: 'Dashboard' },
         { path: '/notes', icon: FileText, label: 'My Notes' },
         { path: '/archive', icon: ArchiveIcon, label: 'Archive' },
+        { path: '/trash', icon: Trash2, label: 'Trash' },
         { path: '/analytics', icon: BarChart3, label: 'Analytics' },
         { path: '/profile', icon: User, label: 'Profile' },
         { path: '/settings', icon: Settings, label: 'Settings' },

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Archive as ArchiveIcon, Search, RefreshCw, AlertCircle, ArrowLeft, Trash2 } from 'lucide-react';
+import { Trash2, Search, RefreshCw, AlertCircle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { notesApi } from '../services/api';
 
-export default function Archive() {
+export default function Trash() {
     const navigate = useNavigate();
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -11,42 +11,41 @@ export default function Archive() {
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        fetchArchivedNotes();
+        fetchTrashedNotes();
     }, []);
 
-    const fetchArchivedNotes = async () => {
+    const fetchTrashedNotes = async () => {
         setLoading(true);
         try {
-            // Fetch notes with archived=true
-            const response = await notesApi.getAll({ skip: 0, limit: 100, archived: true });
+            const response = await notesApi.getTrashed({ skip: 0, limit: 100 });
             setNotes(response.data);
             setError(null);
         } catch (err) {
-            console.error('Failed to fetch archived notes:', err);
-            setError('Failed to load archived notes. Please try again.');
+            console.error('Failed to fetch trashed notes:', err);
+            setError('Failed to load trashed notes. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleUnarchive = async (noteId, e) => {
+    const handleRestore = async (noteId, e) => {
         e.stopPropagation();
         try {
-            await notesApi.unarchive(noteId);
+            await notesApi.restore(noteId);
             setNotes(prev => prev.filter(n => n.id !== noteId));
         } catch (err) {
-            console.error('Failed to unarchive note:', err);
+            console.error('Failed to restore note:', err);
         }
     };
 
-    const handleTrash = async (noteId, e) => {
+    const handleDeletePermanently = async (noteId, e) => {
         e.stopPropagation();
-        if (confirm('Move this archived note to trash?')) {
+        if (window.confirm('Are you sure you want to permanently delete this note? This action cannot be undone.')) {
             try {
-                await notesApi.moveToTrash(noteId);
+                await notesApi.delete(noteId); //Backend handles permanent if already trashed or via param
                 setNotes(prev => prev.filter(n => n.id !== noteId));
             } catch (err) {
-                console.error('Failed to move note to trash:', err);
+                console.error('Failed to delete note permanently:', err);
             }
         }
     };
@@ -71,13 +70,13 @@ export default function Archive() {
                             Back to Notes
                         </button>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight flex items-center gap-3">
-                            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400">
-                                <ArchiveIcon className="w-8 h-8" />
+                            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400">
+                                <Trash2 className="w-8 h-8" />
                             </div>
-                            Archive
+                            Trash
                         </h1>
                         <p className="mt-2 text-gray-500 dark:text-gray-400">
-                            View and restore your archived notes.
+                            Notes here are deleted but can be restored.
                         </p>
                     </div>
 
@@ -86,14 +85,14 @@ export default function Archive() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search archive..."
+                                placeholder="Search trash..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none w-full md:w-64"
+                                className="pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none w-full md:w-64"
                             />
                         </div>
                         <button
-                            onClick={fetchArchivedNotes}
+                            onClick={fetchTrashedNotes}
                             className="p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                         >
                             <RefreshCw className={`w-5 h-5 text-gray-500 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
@@ -113,7 +112,7 @@ export default function Archive() {
                         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
                         <p className="text-red-900 dark:text-red-200 font-medium">{error}</p>
                         <button
-                            onClick={fetchArchivedNotes}
+                            onClick={fetchTrashedNotes}
                             className="mt-4 px-6 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/50 transition"
                         >
                             Try Again
@@ -122,11 +121,11 @@ export default function Archive() {
                 ) : filteredNotes.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-32 text-center opacity-50">
                         <div className="w-24 h-24 bg-gray-100 dark:bg-gray-900 rounded-full flex items-center justify-center mb-6">
-                            <ArchiveIcon className="w-10 h-10 text-gray-400" />
+                            <Trash2 className="w-10 h-10 text-gray-400" />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">No archived notes</h3>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Trash is empty</h3>
                         <p className="text-gray-500 dark:text-gray-400 max-w-sm mt-2">
-                            {searchQuery ? 'No matches found for your search.' : 'Notes you archive will appear here safely stored away.'}
+                            {searchQuery ? 'No matches found for your search.' : 'Notes you delete will appear here for a while.'}
                         </p>
                     </div>
                 ) : (
@@ -134,10 +133,9 @@ export default function Archive() {
                         {filteredNotes.map(note => (
                             <div
                                 key={note.id}
-                                onClick={() => navigate(`/notes/${note.id}`)}
-                                className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
+                                className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                             >
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-1 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                                     {note.title}
                                 </h3>
                                 <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-3 mb-4 h-12 leading-relaxed">
@@ -150,20 +148,20 @@ export default function Archive() {
                                     </span>
                                     <div className="flex items-center gap-2">
                                         <button
-                                            onClick={(e) => handleUnarchive(note.id, e)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/40 transition"
-                                            title="Restore to active notes"
+                                            onClick={(e) => handleRestore(note.id, e)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-bold rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition"
+                                            title="Restore"
                                         >
-                                            <RefreshCw className="w-3 h-3" />
+                                            <RotateCcw className="w-3 h-3" />
                                             Restore
                                         </button>
                                         <button
-                                            onClick={(e) => handleTrash(note.id, e)}
+                                            onClick={(e) => handleDeletePermanently(note.id, e)}
                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-xs font-bold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition"
-                                            title="Move to Trash"
+                                            title="Delete Permanently"
                                         >
                                             <Trash2 className="w-3 h-3" />
-                                            Trash
+                                            Delete
                                         </button>
                                     </div>
                                 </div>

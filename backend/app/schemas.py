@@ -80,6 +80,7 @@ class NoteUpdate(BaseModel):
     is_favorite: Optional[bool] = None
     is_archived: Optional[bool] = None
     is_hidden: Optional[bool] = None
+    is_trash: Optional[bool] = None
 
 
 class FileAttachmentOut(BaseModel):
@@ -105,6 +106,7 @@ class NoteOut(BaseModel):
     is_favorite: bool = False
     is_archived: bool = False
     is_hidden: bool = False
+    is_trash: bool = False
     is_locked: bool = False
     version: int = 1
     user_id: int
@@ -224,6 +226,7 @@ class NoteSearch(BaseModel):
     tags: Optional[List[str]] = None
     is_favorite: Optional[bool] = None
     is_archived: Optional[bool] = None
+    is_trash: Optional[bool] = None
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
     limit: int = Field(default=50, le=100)

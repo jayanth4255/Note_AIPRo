@@ -10,8 +10,7 @@ export const authService = {
      */
     signup: async (name, email, password) => {
         const response = await api.post('/api/auth/signup', { name, email, password });
-        if (response.data.access_token) {
-            localStorage.setItem('token', response.data.access_token);
+        if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
         }
         return response.data;
@@ -22,8 +21,7 @@ export const authService = {
      */
     login: async (email, password) => {
         const response = await api.post('/api/auth/login', { email, password });
-        if (response.data.access_token) {
-            localStorage.setItem('token', response.data.access_token);
+        if (response.data.user) {
             localStorage.setItem('user', JSON.stringify(response.data.user));
         }
         return response.data;
@@ -32,8 +30,12 @@ export const authService = {
     /**
      * Logout user
      */
-    logout: () => {
-        localStorage.removeItem('token');
+    logout: async () => {
+        try {
+            await api.post('/api/auth/logout');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
         localStorage.removeItem('user');
     },
 
@@ -78,7 +80,7 @@ export const authService = {
      * Check if user is authenticated
      */
     isAuthenticated: () => {
-        return !!localStorage.getItem('token');
+        return !!localStorage.getItem('user');
     },
 
     /**

@@ -55,6 +55,7 @@ class Note(Base):
     # Flags
     is_favorite = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)
+    is_trash = Column(Boolean, default=False)
     
     # Privacy features
     is_hidden = Column(Boolean, default=False)  # Hide note from main view

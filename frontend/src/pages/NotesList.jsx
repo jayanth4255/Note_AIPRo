@@ -34,16 +34,17 @@ export default function NotesList() {
         }
     };
 
-    const handleDelete = async (id, e) => {
+    const handleTrash = async (id, e) => {
         e.preventDefault();
-        if (!confirm('Are you sure you want to delete this note?')) return;
+        e.stopPropagation();
+        if (!confirm('Move this note to trash?')) return;
 
         try {
-            await notesApi.delete(id);
+            await notesApi.moveToTrash(id);
             setNotes(notes.filter(note => note.id !== id));
         } catch (error) {
-            console.error('Failed to delete note:', error);
-            alert('Failed to delete note');
+            console.error('Failed to move note to trash:', error);
+            alert('Failed to move note to trash');
         }
     };
 
@@ -389,6 +390,13 @@ export default function NotesList() {
                                             title="Summarize"
                                         >
                                             <FileText className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleTrash(note.id, e)}
+                                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                            title="Move to Trash"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
 
