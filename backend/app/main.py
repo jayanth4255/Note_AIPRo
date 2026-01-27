@@ -15,9 +15,12 @@ from .database import get_db, engine, Base
 from .config import get_settings
 from . import models, schemas, crud, auth, ai_integration, file_handler, pdf_export
 
+<<<<<<< HEAD
 from .database import init_db
 init_db()
 
+=======
+>>>>>>> 4bd5703 (Successfully add the delete button)
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
@@ -34,10 +37,15 @@ app = FastAPI(
 )
 
 
+# CORS Configuration - Allow ALL origins for debugging
+ALLOWED_ORIGINS = ["*"]
+
+print("LOADING CORS CONFIGURATION: ALLOWING ALL ORIGINS")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,7 +68,7 @@ async def health_check():
 # ==================== AUTHENTICATION ROUTES ====================
 
 @app.post("/api/auth/signup", response_model=schemas.Token, status_code=status.HTTP_201_CREATED)
-async def signup(user: schemas.UserCreate, response: Response, db: Session = Depends(get_db)):
+async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     # Check if user exists
     existing_user = crud.get_user_by_email(db, user.email)
@@ -80,17 +88,6 @@ async def signup(user: schemas.UserCreate, response: Response, db: Session = Dep
     db_user.last_login = datetime.utcnow()
     db.commit()
     
-    # Set HTTP-only cookie
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        samesite="none" if not settings.DEBUG else "lax",
-        secure=not settings.DEBUG  # True in production
-    )
-    
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -99,8 +96,8 @@ async def signup(user: schemas.UserCreate, response: Response, db: Session = Dep
 
 
 @app.post("/api/auth/login", response_model=schemas.Token)
-async def login(user: schemas.UserLogin, response: Response, db: Session = Depends(get_db)):
-    """Login user and return JWT token with HTTP-only cookie"""
+async def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    """Login user and return JWT token"""
     # Get user
     db_user = crud.get_user_by_email(db, user.email)
     
@@ -111,7 +108,6 @@ async def login(user: schemas.UserLogin, response: Response, db: Session = Depen
         )
     
     # Generate token
-    
     access_token = auth.create_access_token({"user_id": db_user.id})
     
     # Update last login
@@ -122,34 +118,11 @@ async def login(user: schemas.UserLogin, response: Response, db: Session = Depen
     # Log activity
     crud.create_activity(db, user_id=db_user.id, activity_type="login", description="User logged in")
     
-    # Set HTTP-only cookie
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        samesite="none" if not settings.DEBUG else "lax",
-        secure=not settings.DEBUG  # True in production
-    )
-    
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": db_user
     }
-
-
-@app.post("/api/auth/logout")
-async def logout(response: Response):
-    """Logout user and clear JWT cookie"""
-    response.delete_cookie(
-        key="access_token",
-        httponly=True,
-        samesite="none" if not settings.DEBUG else "lax",
-        secure=not settings.DEBUG
-    )
-    return {"message": "Logged out successfully"}
 
 
 @app.post("/api/auth/forgot-password")
@@ -323,56 +296,15 @@ async def update_note(
 @app.delete("/api/notes/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_note(
     note_id: int,
-    permanent: bool = False,
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Delete a note (soft delete by default)"""
-    success = crud.delete_note(db, note_id, current_user.id, permanent)
+    """Delete a note"""
+    success = crud.delete_note(db, note_id, current_user.id)
     if not success:
         raise HTTPException(status_code=404, detail="Note not found")
     
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@app.post("/api/notes/{note_id}/trash", response_model=schemas.NoteOut)
-async def move_to_trash(
-    note_id: int,
-    current_user: models.User = Depends(auth.get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Move a note to trash"""
-    success = crud.delete_note(db, note_id, current_user.id, permanent=False)
-    if not success:
-        raise HTTPException(status_code=404, detail="Note not found")
-    
-    note = crud.get_note_by_id(db, note_id, current_user.id)
-    return note
-
-
-@app.post("/api/notes/{note_id}/restore", response_model=schemas.NoteOut)
-async def restore_from_trash(
-    note_id: int,
-    current_user: models.User = Depends(auth.get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Restore a note from trash"""
-    note = crud.restore_note(db, note_id, current_user.id)
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
-    return note
-
-
-@app.get("/api/notes/trash/all", response_model=List[schemas.NoteOut])
-async def get_trashed_notes(
-    skip: int = 0,
-    limit: int = 100,
-    current_user: models.User = Depends(auth.get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get all trashed notes"""
-    notes = crud.get_trashed_notes(db, current_user.id, skip, limit)
-    return notes
 
 
 @app.post("/api/notes/{note_id}/archive", response_model=schemas.NoteOut)
@@ -399,6 +331,69 @@ async def unarchive_note(
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return note
+
+
+# ==================== TRASH ROUTES ====================
+
+@app.get("/api/trash", response_model=List[schemas.NoteOut])
+async def get_trash(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all deleted notes (trash)"""
+    notes = crud.get_trash_notes(db, current_user.id, skip, limit)
+    return notes
+
+
+@app.post("/api/notes/{note_id}/trash", response_model=schemas.NoteOut)
+async def move_note_to_trash(
+    note_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Move a note to trash (soft delete)"""
+    note = crud.move_to_trash(db, note_id, current_user.id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return note
+
+
+@app.post("/api/notes/{note_id}/restore", response_model=schemas.NoteOut)
+async def restore_note(
+    note_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Restore a note from trash"""
+    note = crud.restore_from_trash(db, note_id, current_user.id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found in trash")
+    return note
+
+
+@app.delete("/api/trash/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def permanent_delete(
+    note_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Permanently delete a note from trash"""
+    success = crud.permanent_delete_note(db, note_id, current_user.id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Note not found in trash")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.delete("/api/trash", status_code=status.HTTP_200_OK)
+async def empty_trash_endpoint(
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Empty trash (permanently delete all notes in trash)"""
+    count = crud.empty_trash(db, current_user.id)
+    return {"message": f"Trash emptied successfully", "deleted_count": count}
 
 
 @app.post("/api/notes/search", response_model=List[schemas.NoteOut])
@@ -1057,7 +1052,8 @@ async def ai_ask_notes_endpoint(
     # Fetch notes, excluding private ones
     notes = db.query(models.Note).filter(
         models.Note.user_id == current_user.id,
-        models.Note.is_archived == False
+        models.Note.is_archived == False,
+        models.Note.is_deleted == False
     ).order_by(models.Note.updated_at.desc()).limit(30).all()
     
     # Filter out private notes from meta_data
@@ -1118,7 +1114,8 @@ async def ai_daily_brief_endpoint(
     recent_notes = db.query(models.Note).filter(
         models.Note.user_id == current_user.id,
         models.Note.updated_at >= week_ago,
-        models.Note.is_archived == False
+        models.Note.is_archived == False,
+        models.Note.is_deleted == False
     ).order_by(models.Note.updated_at.desc()).limit(10).all()
     
     # Extract tasks from recent notes

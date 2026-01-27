@@ -33,21 +33,10 @@ export default function Archive() {
         e.stopPropagation();
         try {
             await notesApi.unarchive(noteId);
+            // Remove from list locally
             setNotes(prev => prev.filter(n => n.id !== noteId));
         } catch (err) {
             console.error('Failed to unarchive note:', err);
-        }
-    };
-
-    const handleTrash = async (noteId, e) => {
-        e.stopPropagation();
-        if (confirm('Move this archived note to trash?')) {
-            try {
-                await notesApi.moveToTrash(noteId);
-                setNotes(prev => prev.filter(n => n.id !== noteId));
-            } catch (err) {
-                console.error('Failed to move note to trash:', err);
-            }
         }
     };
 
@@ -152,18 +141,23 @@ export default function Archive() {
                                         <button
                                             onClick={(e) => handleUnarchive(note.id, e)}
                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/40 transition"
-                                            title="Restore to active notes"
                                         >
                                             <RefreshCw className="w-3 h-3" />
                                             Restore
                                         </button>
                                         <button
-                                            onClick={(e) => handleTrash(note.id, e)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-xs font-bold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Move this note to trash?')) {
+                                                    notesApi.moveToTrash(note.id).then(() => {
+                                                        setNotes(prev => prev.filter(n => n.id !== note.id));
+                                                    });
+                                                }
+                                            }}
+                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                                             title="Move to Trash"
                                         >
-                                            <Trash2 className="w-3 h-3" />
-                                            Trash
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>

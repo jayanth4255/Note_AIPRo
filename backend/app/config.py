@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # App
-    DEBUG: bool = False
+    DEBUG: bool = True
     APP_NAME: str = "NoteAI Pro"
     
     @property

@@ -54,10 +54,10 @@ export default function NoteDetail() {
     };
 
     const handleDelete = async () => {
-        if (window.confirm('Are you sure you want to delete this note?')) {
+        if (window.confirm('Move this note to trash?')) {
             try {
-                await notesApi.delete(id);
-                toast.success('Note deleted');
+                await notesApi.moveToTrash(id);
+                toast.success('Note moved to trash');
                 navigate('/notes');
             } catch (error) {
                 toast.error('Failed to delete note');

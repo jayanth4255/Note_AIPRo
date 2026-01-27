@@ -14,9 +14,13 @@ export const notesApi = {
     }),
     archive: (id) => api.post(`/api/notes/${id}/archive`),
     unarchive: (id) => api.post(`/api/notes/${id}/unarchive`),
+
+    // Trash operations
     moveToTrash: (id) => api.post(`/api/notes/${id}/trash`),
     restore: (id) => api.post(`/api/notes/${id}/restore`),
-    getTrashed: (params) => api.get('/api/notes/trash/all', { params }),
+    getTrash: (params) => api.get('/api/trash', { params }),
+    permanentDelete: (id) => api.delete(`/api/trash/${id}`),
+    emptyTrash: () => api.delete('/api/trash'),
 };
 
 // File API

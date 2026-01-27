@@ -55,7 +55,7 @@ class Note(Base):
     # Flags
     is_favorite = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)
-    is_trash = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False)  # Soft delete for trash
     
     # Privacy features
     is_hidden = Column(Boolean, default=False)  # Hide note from main view
@@ -71,6 +71,7 @@ class Note(Base):
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = Column(DateTime, nullable=True)  # Timestamp when moved to trash
     
     # Relationships
     user = relationship("User", back_populates="notes")

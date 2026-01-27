@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { notesApi, aiApi } from '../services/api';
-import { FileText, Plus, Clock, Star, Sparkles, Search, Brain, Loader2, MessageSquare, Calendar, Trash2 } from 'lucide-react';
+import { FileText, Plus, Clock, Star, Sparkles, Search, Brain, Loader2, MessageSquare, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '../components/AppLayout';
 
@@ -26,8 +26,8 @@ export default function Dashboard() {
     const fetchData = async () => {
         try {
             const notesRes = await notesApi.getAll({ limit: 6 });
-            // Filter out hidden and trashed notes
-            const visibleNotes = notesRes.data.filter(note => !note.is_hidden && !note.is_trash);
+            // Filter out hidden notes
+            const visibleNotes = notesRes.data.filter(note => !note.is_hidden);
             setRecentNotes(visibleNotes.slice(0, 6));
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
@@ -254,24 +254,6 @@ export default function Dashboard() {
                                     {note.is_favorite && (
                                         <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 flex-shrink-0" />
                                     )}
-                                    <button
-                                        onClick={async (e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            if (confirm('Move this note to trash?')) {
-                                                try {
-                                                    await notesApi.moveToTrash(note.id);
-                                                    setRecentNotes(recentNotes.filter(n => n.id !== note.id));
-                                                    toast.success('Moved to trash');
-                                                } catch (err) {
-                                                    toast.error('Failed to move to trash');
-                                                }
-                                            }
-                                        }}
-                                        className="p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
                                 </div>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 h-10">
                                     {note.content?.replace(/<[^>]*>/g, '') || 'No content'}

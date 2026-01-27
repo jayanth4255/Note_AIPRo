@@ -40,32 +40,8 @@ export const notesService = {
     /**
      * Delete a note
      */
-    deleteNote: async (noteId, permanent = false) => {
-        await api.delete(`/api/notes/${noteId}`, { params: { permanent } });
-    },
-
-    /**
-     * Move a note to trash
-     */
-    moveToTrash: async (noteId) => {
-        const response = await api.post(`/api/notes/${noteId}/trash`);
-        return response.data;
-    },
-
-    /**
-     * Restore a note from trash
-     */
-    restoreFromTrash: async (noteId) => {
-        const response = await api.post(`/api/notes/${noteId}/restore`);
-        return response.data;
-    },
-
-    /**
-     * Get all trashed notes
-     */
-    getTrashedNotes: async (skip = 0, limit = 100) => {
-        const response = await api.get('/api/notes/trash/all', { params: { skip, limit } });
-        return response.data;
+    deleteNote: async (noteId) => {
+        await api.delete(`/api/notes/${noteId}`);
     },
 
     /**

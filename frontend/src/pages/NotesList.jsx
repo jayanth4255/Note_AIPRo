@@ -34,9 +34,8 @@ export default function NotesList() {
         }
     };
 
-    const handleTrash = async (id, e) => {
+    const handleDelete = async (id, e) => {
         e.preventDefault();
-        e.stopPropagation();
         if (!confirm('Move this note to trash?')) return;
 
         try {
@@ -44,7 +43,7 @@ export default function NotesList() {
             setNotes(notes.filter(note => note.id !== id));
         } catch (error) {
             console.error('Failed to move note to trash:', error);
-            alert('Failed to move note to trash');
+            alert('Failed to delete note');
         }
     };
 
@@ -392,7 +391,7 @@ export default function NotesList() {
                                             <FileText className="w-4 h-4" />
                                         </button>
                                         <button
-                                            onClick={(e) => handleTrash(note.id, e)}
+                                            onClick={(e) => handleDelete(note.id, e)}
                                             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                                             title="Move to Trash"
                                         >

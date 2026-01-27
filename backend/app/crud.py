@@ -133,11 +133,11 @@ def reset_password(db: Session, token: str, new_password: str) -> bool:
 # ==================== NOTE OPERATIONS ====================
 
 def get_notes(db: Session, user_id: int, skip: int = 0, limit: int = 100, archived: bool = False) -> List[models.Note]:
-    """Get all notes for a user (default: non-archived)"""
+    """Get all notes for a user (default: non-archived, non-deleted)"""
     return db.query(models.Note).filter(
         models.Note.user_id == user_id,
         models.Note.is_archived == archived,
-        models.Note.is_trash == False
+        models.Note.is_deleted == False  # Exclude deleted notes
     ).order_by(models.Note.updated_at.desc()).offset(skip).limit(limit).all()
 
 
@@ -201,57 +201,20 @@ def update_note(db: Session, note_id: int, note_update: schemas.NoteUpdate, user
     return db_note
 
 
-def delete_note(db: Session, note_id: int, user_id: int, permanent: bool = False) -> bool:
-    """Delete a note (soft delete by default, moving to trash)"""
+def delete_note(db: Session, note_id: int, user_id: int) -> bool:
+    """Delete a note"""
     db_note = get_note_by_id(db, note_id, user_id)
     if not db_note:
         return False
     
-    if permanent or db_note.is_trash:
-        # Permanent deletion
-        db.delete(db_note)
-        activity_type = "note_deleted_permanently"
-        desc = f"Permanently deleted note: {db_note.title}"
-    else:
-        # Move to trash
-        db_note.is_trash = True
-        db_note.updated_at = datetime.utcnow()
-        activity_type = "note_trashed"
-        desc = f"Moved note to trash: {db_note.title}"
-    
+    db.delete(db_note)
     db.commit()
     
     # Log activity
-    create_activity(db, user_id=user_id, activity_type=activity_type,
-                   description=desc)
+    create_activity(db, user_id=user_id, activity_type="note_deleted",
+                   description=f"Deleted note: {db_note.title}")
     
     return True
-
-
-def restore_note(db: Session, note_id: int, user_id: int) -> Optional[models.Note]:
-    """Restore a note from trash"""
-    db_note = get_note_by_id(db, note_id, user_id)
-    if not db_note:
-        return None
-    
-    db_note.is_trash = False
-    db_note.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(db_note)
-    
-    # Log activity
-    create_activity(db, user_id=user_id, activity_type="note_restored",
-                   description=f"Restored note from trash: {db_note.title}", note_id=note_id)
-    
-    return db_note
-
-
-def get_trashed_notes(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Note]:
-    """Get all trashed notes for a user"""
-    return db.query(models.Note).filter(
-        models.Note.user_id == user_id,
-        models.Note.is_trash == True
-    ).order_by(models.Note.updated_at.desc()).offset(skip).limit(limit).all()
 
 
 def archive_note(db: Session, note_id: int, user_id: int) -> Optional[models.Note]:
@@ -280,9 +243,108 @@ def unarchive_note(db: Session, note_id: int, user_id: int) -> Optional[models.N
     return db_note
 
 
+# ==================== TRASH OPERATIONS ====================
+
+def move_to_trash(db: Session, note_id: int, user_id: int) -> Optional[models.Note]:
+    """Move a note to trash (soft delete)"""
+    db_note = get_note_by_id(db, note_id, user_id)
+    if not db_note:
+        return None
+    
+    db_note.is_deleted = True
+    db_note.deleted_at = datetime.utcnow()
+    db_note.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_note)
+    
+    # Log activity
+    create_activity(db, user_id=user_id, activity_type="note_trashed",
+                   description=f"Moved to trash: {db_note.title}", note_id=note_id)
+    
+    return db_note
+
+
+def restore_from_trash(db: Session, note_id: int, user_id: int) -> Optional[models.Note]:
+    """Restore a note from trash"""
+    db_note = db.query(models.Note).filter(
+        models.Note.id == note_id,
+        models.Note.user_id == user_id,
+        models.Note.is_deleted == True
+    ).first()
+    
+    if not db_note:
+        return None
+    
+    db_note.is_deleted = False
+    db_note.deleted_at = None
+    db_note.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(db_note)
+    
+    # Log activity
+    create_activity(db, user_id=user_id, activity_type="note_restored",
+                   description=f"Restored from trash: {db_note.title}", note_id=note_id)
+    
+    return db_note
+
+
+def get_trash_notes(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Note]:
+    """Get all deleted notes (trash) for a user"""
+    return db.query(models.Note).filter(
+        models.Note.user_id == user_id,
+        models.Note.is_deleted == True
+    ).order_by(models.Note.deleted_at.desc()).offset(skip).limit(limit).all()
+
+
+def permanent_delete_note(db: Session, note_id: int, user_id: int) -> bool:
+    """Permanently delete a note from trash"""
+    db_note = db.query(models.Note).filter(
+        models.Note.id == note_id,
+        models.Note.user_id == user_id,
+        models.Note.is_deleted == True
+    ).first()
+    
+    if not db_note:
+        return False
+    
+    note_title = db_note.title
+    db.delete(db_note)
+    db.commit()
+    
+    # Log activity
+    create_activity(db, user_id=user_id, activity_type="note_permanently_deleted",
+                   description=f"Permanently deleted: {note_title}")
+    
+    return True
+
+
+def empty_trash(db: Session, user_id: int) -> int:
+    """Permanently delete all notes in trash"""
+    deleted_notes = db.query(models.Note).filter(
+        models.Note.user_id == user_id,
+        models.Note.is_deleted == True
+    ).all()
+    
+    count = len(deleted_notes)
+    
+    for note in deleted_notes:
+        db.delete(note)
+    
+    db.commit()
+    
+    # Log activity
+    create_activity(db, user_id=user_id, activity_type="trash_emptied",
+                   description=f"Emptied trash ({count} notes)")
+    
+    return count
+
+
 def search_notes(db: Session, user_id: int, search_params: schemas.NoteSearch) -> List[models.Note]:
     """Search and filter notes"""
-    query = db.query(models.Note).filter(models.Note.user_id == user_id)
+    query = db.query(models.Note).filter(
+        models.Note.user_id == user_id,
+        models.Note.is_deleted == False
+    )
     
     # Text search
     if search_params.query:
@@ -305,13 +367,6 @@ def search_notes(db: Session, user_id: int, search_params: schemas.NoteSearch) -
     # Filter by archived
     if search_params.is_archived is not None:
         query = query.filter(models.Note.is_archived == search_params.is_archived)
-    
-    # Filter by trash
-    if search_params.is_trash is not None:
-        query = query.filter(models.Note.is_trash == search_params.is_trash)
-    else:
-        # By default exclude trash unless explicitly requested
-        query = query.filter(models.Note.is_trash == False)
     
     # Date range
     if search_params.date_from:
