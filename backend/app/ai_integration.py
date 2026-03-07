@@ -75,10 +75,15 @@ async def _generate_text(prompt: str, system_prompt: str = "You are a helpful as
 async def ai_chat(text: str, history: List[Dict[str, str]] = None, context: Optional[str] = None) -> str:
     """Chat with the AI using conversation history"""
     system_prompt = "You are a helpful AI assistant for NoteAI Pro. You help users with their notes, organization, and information needs."
-    if context:
-        system_prompt += f"\n\nContext about the current task or file:\n{context}"
+    
+    # Truncate content to avoid token limits
+    safe_text = _truncate_text(text, max_chars=50000)
+    safe_context = _truncate_text(context, max_chars=20000) if context else None
+    
+    if safe_context:
+        system_prompt += f"\n\nContext about the current task or file:\n{safe_context}"
         
-    return await _generate_text(text, system_prompt, history)
+    return await _generate_text(safe_text, system_prompt, history)
 
 async def ai_summarize(text: str, mode: str = "short", context: Optional[str] = None) -> str:
     """Summarize text with different modes: short, bullets, key_takeaways, eli5"""
