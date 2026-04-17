@@ -14,12 +14,6 @@ from io import BytesIO
 from .database import get_db, engine, Base
 from .config import get_settings
 from . import models, schemas, crud, auth, ai_integration, file_handler, pdf_export
-<<<<<<< HEAD
-=======
-
->>>>>>> 3718f4ce08022470954fe730295e9f202b44d3c6
-from .database import init_db
-init_db()
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
