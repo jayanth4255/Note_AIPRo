@@ -5,6 +5,8 @@ Application configuration management using pydantic-settings
 from pydantic_settings import BaseSettings
 from typing import List, Optional
 from functools import lru_cache
+import os
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -43,7 +45,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # App
-    DEBUG: bool = True
+    DEBUG: bool = False
     APP_NAME: str = "NoteAI Pro"
     
     @property
@@ -64,7 +66,7 @@ class Settings(BaseSettings):
     @property
     def database_url_validated(self) -> str:
         """Fix postgres:// to postgresql:// for Render/Heroku compatibility"""
-        if self.DATABASE_URL.startswith("postgres://"):
+        if self.DATABASE_URL and self.DATABASE_URL.startswith("postgres://"):
             return self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
         return self.DATABASE_URL
 
